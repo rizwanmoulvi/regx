@@ -13,7 +13,7 @@
  *   npm run lifecycle -- onboard <0x…>          new ONCHAINID + signed KYC claim + registration
  */
 import { addr, u64 } from "@arkiv-network/sdk/schema"
-import { type Address, type Hex, encodeAbiParameters, encodeFunctionData, formatUnits, keccak256, parseEventLogs, toHex } from "viem"
+import { type Address, type Hex, encodeAbiParameters, encodeFunctionData, formatUnits, keccak256, toHex } from "viem"
 import { atsSecurityAbi } from "../shared/src/abis/ats"
 import { identityAbi, identityRegistryAbi, tINRAbi } from "../shared/src/abis/generated"
 import { Action, LIFETIME, toJsonBytes } from "../shared/src/arkiv"
@@ -50,10 +50,9 @@ async function couponSet(inSeconds: number, execAfter = 60) {
     rateDecimals: 2,
     rateStatus: 1, // SET
   }
-  const hash = await simulateAndSend("deployer", bond, atsSecurityAbi, "setCoupon", [coupon], HEDERA_GAS.high)
-  const r = await hedera.getTransactionReceipt({ hash })
-  const [ev] = parseEventLogs({ abi: atsSecurityAbi, eventName: "CouponSet", logs: r.logs })
-  const id = ev?.args.couponId ?? (await read<bigint>(bond, atsSecurityAbi, "getCouponCount"))
+  await simulateAndSend("deployer", bond, atsSecurityAbi, "setCoupon", [coupon], HEDERA_GAS.high)
+  // coupon ids are sequential; reading the count avoids a second (slow) receipt fetch from the relay
+  const id = await read<bigint>(bond, atsSecurityAbi, "getCouponCount")
   log(`coupon #${id} set; record date ${new Date(Number(record) * 1000).toISOString()}`)
   return id
 }
@@ -95,10 +94,11 @@ async function couponPay(id: bigint) {
 }
 
 /** Pays a coupon through Hedera Scheduled Transactions: one schedule per holder, executed by the network at the execution date. */
-async function couponSchedule(inSeconds: number, execAfter: number, wait: boolean) {
-  const id = BigInt(await couponSet(inSeconds, execAfter))
+async function couponSchedule(inSeconds: number, execAfter: number, wait: boolean, existing?: bigint) {
+  const id = existing ?? BigInt(await couponSet(inSeconds, execAfter))
   const [reg] = await read<any>(bond, atsSecurityAbi, "getCoupon", [id])
-  const executeAt = new Date(Number(reg.coupon.executionDate) * 1000)
+  // long-term schedules need a future expiry: the coupon's execution date, or 90 s from now if that has passed
+  const executeAt = new Date(Math.max(Number(reg.coupon.executionDate) * 1000, Date.now() + 90_000))
   for (;;) {
     const holders = await read<Address[]>(bond, atsSecurityAbi, "getSecurityHolders", [0n, 100n])
     const probe = holders[0] && (await read<any>(bond, atsSecurityAbi, "getCouponAmountFor", [id, holders[0]]))
@@ -177,7 +177,7 @@ async function main() {
       return couponPay(BigInt(id))
     }
     case "coupon:schedule":
-      return couponSchedule(flag("in", 60), flag("exec", 180), process.argv.includes("--wait"))
+      return couponSchedule(flag("in", 60), flag("exec", 180), process.argv.includes("--wait"), process.argv.includes("--id") ? BigInt(flag("id", 0)) : undefined)
     case "coupon:set":
       return void (await couponSet(flag("in", 60)))
     case "coupon:pay":

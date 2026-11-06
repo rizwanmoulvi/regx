@@ -92,11 +92,11 @@ function AssetCard({ a }: { a: AssetView }) {
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-lg bg-bid-soft px-3 py-2">
           <div className="label text-bid">Best bid</div>
-          <div className="num font-semibold">{bestBid ? `${inr(Number(bestBid.order.price) / 1e6)} × ${bestBid.remaining}` : "—"}</div>
+          <div className="num font-semibold">{book.isLoading ? "…" : bestBid ? `${inr(Number(bestBid.order.price) / 1e6)} × ${bestBid.remaining}` : "—"}</div>
         </div>
         <div className="rounded-lg bg-ask-soft px-3 py-2">
           <div className="label text-ask">Best ask</div>
-          <div className="num font-semibold">{bestAsk ? `${inr(Number(bestAsk.order.price) / 1e6)} × ${bestAsk.remaining}` : "—"}</div>
+          <div className="num font-semibold">{book.isLoading ? "…" : bestAsk ? `${inr(Number(bestAsk.order.price) / 1e6)} × ${bestAsk.remaining}` : "—"}</div>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted">
