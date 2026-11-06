@@ -106,6 +106,8 @@ export default function Issuer() {
       </Section>
 
       <Section title="Investors">
+        {investors.isLoading && <div className="h-16 animate-pulse rounded-lg bg-panel-2" />}
+        {investors.error && <div className="text-sm text-ask">Could not read investors: {String((investors.error as Error).message).slice(0, 200)}</div>}
         <div className="divide-y divide-line">
           {investors.data?.map((i) => (
             <div key={i.a} className="flex flex-wrap items-center gap-3 py-2 text-sm">

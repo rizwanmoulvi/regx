@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { d } from "@/lib/config"
 import { type AssetView, useAssets, useBook, useFills } from "@/lib/data"
 import { ArkivTag, Badge, EntityLink, Empty, HederaTag, inr } from "@/components/ui"
@@ -67,8 +68,17 @@ function AssetCard({ a }: { a: AssetView }) {
   const bestBid = book.data?.bids[0]
   const last = fills.data?.[0]
   const days = Math.max(0, Math.ceil((a.maturity - Date.now() / 1000) / 86400))
+  const router = useRouter()
   return (
-    <Link href={`/asset/${a.security}`} className="panel block p-5 transition hover:border-accent/60">
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest("a")) router.push(`/asset/${a.security}`)
+      }}
+      onKeyDown={(e) => e.key === "Enter" && router.push(`/asset/${a.security}`)}
+      className="panel block cursor-pointer p-5 transition hover:border-accent/60"
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -105,7 +115,12 @@ function AssetCard({ a }: { a: AssetView }) {
         <EntityLink entityKey={a.entityKey} />
         {d.bond?.address?.toLowerCase() === a.security.toLowerCase() && <span className="ml-auto">Issued via ATS factory</span>}
       </div>
-    </Link>
+      <div className="mt-4">
+        <Link href={`/asset/${a.security}`} className="btn btn-primary w-full">
+          Open order book →
+        </Link>
+      </div>
+    </div>
   )
 }
 
