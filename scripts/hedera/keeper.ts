@@ -21,11 +21,11 @@ import { addr, dec, u64 } from "@arkiv-network/sdk/schema"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { type Address, type Hex, type Log, formatUnits, parseEventLogs, zeroAddress } from "viem"
-import { atsSecurityAbi } from "../shared/src/abis/ats"
-import { identityRegistryAbi, regXDvPAbi } from "../shared/src/abis/generated"
-import { Action, Fill, LIFETIME, PAY_DECIMALS, toJsonBytes, v } from "../shared/src/arkiv"
+import { atsSecurityAbi } from "../../shared/src/abis/ats"
+import { identityRegistryAbi, regXDvPAbi } from "../../shared/src/abis/generated"
+import { Action, Fill, LIFETIME, PAY_DECIMALS, toJsonBytes, v } from "../../shared/src/arkiv"
 import { syncAssets } from "./arkiv-sync-assets"
-import { ROOT, arkiv, arkivWalletFor, hedera, log, requireDeployment, sleep } from "./lib/env"
+import { ROOT, arkiv, arkivWalletFor, hedera, log, requireDeployment, sleep } from "../lib/env"
 
 const STATE_FILE = join(ROOT, "scripts", ".keeper-state.json")
 const CHUNK = 900n // Hashio caps eth_getLogs at 1000 blocks

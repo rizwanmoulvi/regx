@@ -5,7 +5,7 @@
 import { execFileSync } from "node:child_process"
 import { join } from "node:path"
 import { type Address, encodeAbiParameters } from "viem"
-import { ROOT, log, requireDeployment } from "./lib/env"
+import { ROOT, log, requireDeployment } from "../lib/env"
 
 const d = requireDeployment()
 const enc = (types: string[], values: unknown[]) =>

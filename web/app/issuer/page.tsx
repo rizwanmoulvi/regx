@@ -1,41 +1,40 @@
 "use client"
 
-import { ATS_ROLES, atsSecurityAbi, explainError, hashscanAddress, identityRegistryAbi } from "@regx/shared"
+import { explainError, identityRegistryAbi, tokenAbi, wcAddress } from "@regx/shared"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import type { Address } from "viem"
+import { type Address, formatUnits } from "viem"
 import { useAccount } from "wagmi"
 import { useToast } from "@/components/toast"
-import { Addr, Badge, HederaTag, Section, TxLink } from "@/components/ui"
-import { d, hederaClient, nameOf } from "@/lib/config"
-import { useBondLive } from "@/lib/data"
+import { Addr, Badge, HederaTag, Section, TxLink, inr } from "@/components/ui"
+import { chainClient, d, nameOf, note } from "@/lib/config"
+import { useNoteLive } from "@/lib/data"
 import { issuer } from "@/lib/tx"
 
 export default function Issuer() {
   const { address } = useAccount()
-  const live = useBondLive()
+  const live = useNoteLive()
   const toast = useToast()
   const qc = useQueryClient()
   const [busy, setBusy] = useState<string>()
-  const bond = d.bond?.address
 
   const isAgent = useQuery({
     queryKey: ["isAgent", address],
-    enabled: Boolean(address && bond),
-    queryFn: () => hederaClient.readContract({ address: bond!, abi: atsSecurityAbi, functionName: "hasRole", args: [ATS_ROLES.FREEZE_MANAGER, address!] }),
+    enabled: Boolean(address && note),
+    queryFn: () => chainClient.readContract({ address: note!.token, abi: tokenAbi, functionName: "isAgent", args: [address!] }),
   })
 
   const investors = useQuery({
     queryKey: ["investors", live.data?.holders?.length],
-    enabled: Boolean(bond && d.trex),
+    enabled: Boolean(note && d.trex),
     queryFn: async () => {
       const list = Array.from(new Set([...(Object.values(d.investors ?? {}) as Address[]), ...((live.data?.holders ?? []) as Address[])]))
       return Promise.all(
         list.map(async (a) => {
           const [verified, frozen, units] = await Promise.all([
-            hederaClient.readContract({ address: d.trex!.identityRegistry, abi: identityRegistryAbi, functionName: "isVerified", args: [a] }),
-            hederaClient.readContract({ address: bond!, abi: atsSecurityAbi, functionName: "isFrozen", args: [a] }),
-            hederaClient.readContract({ address: bond!, abi: atsSecurityAbi, functionName: "balanceOf", args: [a] }),
+            chainClient.readContract({ address: d.trex!.identityRegistry, abi: identityRegistryAbi, functionName: "isVerified", args: [a] }),
+            chainClient.readContract({ address: note!.token, abi: tokenAbi, functionName: "isFrozen", args: [a] }),
+            chainClient.readContract({ address: note!.token, abi: tokenAbi, functionName: "balanceOf", args: [a] }),
           ])
           return { a, verified, frozen, units }
         }),
@@ -48,7 +47,7 @@ export default function Issuer() {
     setBusy(label)
     try {
       const h = await fn()
-      toast({ kind: "ok", title: label, body: <TxLink hash={h} label="HashScan" /> })
+      toast({ kind: "ok", title: label, body: <TxLink hash={h} label="Explorer" /> })
       setTimeout(() => qc.invalidateQueries(), 1500)
       setTimeout(() => qc.invalidateQueries(), 8000)
     } catch (e) {
@@ -58,46 +57,59 @@ export default function Issuer() {
     }
   }
 
-  if (!d.bond || !d.trex) return <div className="panel p-6 text-sm">Not deployed yet.</div>
+  if (!note || !d.trex) return <div className="panel p-6 text-sm">Not deployed yet.</div>
   const canAct = Boolean(isAgent.data)
+  const t = note.terms
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-bold">Issuer & compliance console</h1>
         <p className="text-sm text-muted">
-          Lifecycle and compliance controls on the ATS bond. Every action is enforced on Hedera, and the keeper publishes it to the public{" "}
-          <b>regx.action</b> feed on Arkiv.
+          Acme Textiles (issuer) and its compliance agent. Rules are enforced by the T-REX token on Whitechain, and the keeper publishes every
+          event to the public <b>regx.action</b> feed on Arkiv.
         </p>
       </div>
 
       {!canAct && (
         <div className="rounded-xl border border-line bg-panel-2 px-4 py-3 text-sm text-muted">
-          Read-only: connect the issuer wallet ({nameOf(d.deployer)}) to freeze, unfreeze or pause. Coupons and onboarding run from the CLI:
-          <code className="num ml-1 rounded bg-panel px-1">npm run lifecycle -- coupon</code>
+          Read-only: connect the issuer wallet ({nameOf(d.deployer)}) to freeze, unfreeze or pause. Onboarding runs from the CLI:
+          <code className="num ml-1 rounded bg-panel px-1">npm run wc:life -- onboard 0x…</code>
         </div>
       )}
 
-      <Section title="ERC-3643 configuration" right={<HederaTag />}>
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <Row k="Security (ATS diamond)" v={d.bond.address} />
-          <Row k="Identity Registry (T-REX)" v={d.trex.identityRegistry} />
-          <Row k="Modular Compliance (T-REX)" v={d.trex.modularCompliance} />
-          <Row k="InvestorCapModule" v={d.investorCapModule!} />
-          <Row k="Claim Issuer (ONCHAINID)" v={d.trex.claimIssuer} />
-          <Row k="Trusted Issuers Registry" v={d.trex.trustedIssuersRegistry} />
-          <Row k="Claim Topics Registry (topic 1 = KYC)" v={d.trex.claimTopicsRegistry} />
-          <Row k="RegX DvP settlement" v={d.dvp!} />
+      <Section title={`${note.symbol} terms`} right={<HederaTag />}>
+        <dl className="grid gap-3 text-sm sm:grid-cols-3">
+          <Kv k="Face value" v={inr(Number(formatUnits(BigInt(t.faceValue), 6)))} />
+          <Kv k="Issue price" v={inr(Number(formatUnits(BigInt(t.issuePrice), 6)))} />
+          <Kv k="Coupon per unit" v={inr(Number(formatUnits(BigInt(t.couponPerUnit), 6)))} />
+          <Kv k="Subscription closes" v={new Date(Number(t.subscriptionEnd) * 1000).toLocaleString()} />
+          <Kv k="Coupon date(s)" v={t.couponDates.map((c) => new Date(Number(c) * 1000).toLocaleString()).join(", ")} />
+          <Kv k="Maturity" v={new Date(Number(t.maturity) * 1000).toLocaleString()} />
+          <Kv k="Issuer USDT balance" v={live.data ? inr(Number(formatUnits(live.data.issuerUsdt, 6)), 2) : "…"} />
+          <Kv k="Next obligation" v={live.data ? `${inr(Number(formatUnits(live.data.obligation.amount, 6)), 2)}${live.data.obligation.isMaturity ? " (maturity)" : " (coupon)"}` : "…"} />
+          <Kv k="Issuer allowance to note" v={live.data ? (live.data.issuerAllowance > 10n ** 30n ? "unlimited" : inr(Number(formatUnits(live.data.issuerAllowance, 6)), 2)) : "…"} />
         </dl>
       </Section>
 
-      <Section
-        title="Trading status"
-        right={live.data?.paused ? <Badge tone="warn">paused</Badge> : <Badge tone="bid">live</Badge>}
-      >
+      <Section title="ERC-3643 configuration">
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <Row k="T-REX Token (ERC-3643)" v={note.token} />
+          <Row k="RegXNote (lifecycle + compliance module)" v={note.note} />
+          <Row k="Modular Compliance (T-REX)" v={note.compliance} />
+          <Row k="InvestorCapModule" v={note.investorCap} />
+          <Row k="Identity Registry (T-REX)" v={d.trex.identityRegistry} />
+          <Row k="Claim Issuer (ONCHAINID)" v={d.trex.claimIssuer} />
+          <Row k="Trusted Issuers Registry" v={d.trex.trustedIssuersRegistry} />
+          <Row k="RegX DvP settlement" v={d.dvp!} />
+          <Row k="Settlement asset: Whitechain test USDT" v={d.usdt!} />
+        </dl>
+      </Section>
+
+      <Section title="Trading status" right={live.data?.paused ? <Badge tone="warn">paused</Badge> : <Badge tone="bid">live</Badge>}>
         <div className="flex gap-2">
           <button className="btn btn-ghost" disabled={!canAct || !!busy || live.data?.paused} onClick={() => run("Paused trading", issuer.pause)}>
-            Pause security
+            Pause note
           </button>
           <button className="btn btn-ghost" disabled={!canAct || !!busy || !live.data?.paused} onClick={() => run("Unpaused trading", issuer.unpause)}>
             Unpause
@@ -116,7 +128,7 @@ export default function Issuer() {
               {i.verified ? <Badge tone="bid">verified</Badge> : <Badge tone="ask">unverified</Badge>}
               {i.frozen && <Badge tone="warn">frozen</Badge>}
               <span className="num text-xs text-muted">
-                {i.units.toString()} {d.bond?.symbol}
+                {i.units.toString()} {note?.symbol}
               </span>
               <button
                 className="btn btn-ghost ml-auto px-2 py-1 text-xs"
@@ -133,12 +145,21 @@ export default function Issuer() {
   )
 }
 
+function Kv({ k, v }: { k: string; v: string }) {
+  return (
+    <div>
+      <dt className="label">{k}</dt>
+      <dd className="num mt-0.5 text-sm">{v}</dd>
+    </div>
+  )
+}
+
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div>
       <dt className="label">{k}</dt>
       <dd className="num mt-0.5 break-all text-xs">
-        <a className="link" href={hashscanAddress(v)} target="_blank" rel="noreferrer">
+        <a className="link" href={wcAddress(v)} target="_blank" rel="noreferrer">
           {v} ↗
         </a>
       </dd>

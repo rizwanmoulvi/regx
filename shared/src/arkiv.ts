@@ -39,6 +39,7 @@ export const Asset = defineSchema("regx.asset", {
   docs: str().optional(), // Swarm reference (never an encrypted one)
   meta: bytes(), // JSON: obligor, invoice summary (no PII)
   updatedAt: u64().indexed(),
+  chainId: u64().indexed().optional(), // 1874 Whitechain Sepolia, 296 Hedera testnet
 })
 
 export const OrderEntity = defineSchema("regx.order", {
@@ -105,7 +106,7 @@ export const fromJsonBytes = <T = Record<string, unknown>>(v: Uint8Array | Hex |
   }
 }
 
-export function orderToEntity(order: Order, orderHash: Hex, signature: Hex, dvp: Address) {
+export function orderToEntity(order: Order, orderHash: Hex, signature: Hex, dvp: Address, chainId = 296) {
   return {
     orderHash,
     security: addr(order.security),
@@ -118,7 +119,7 @@ export function orderToEntity(order: Order, orderHash: Hex, signature: Hex, dvp:
     amount: u64(order.amount),
     nonce: u256(order.nonce),
     expiry: u64(order.expiry),
-    chainId: u64(296n),
+    chainId: u64(BigInt(chainId)),
     sig: hexToBytes(signature),
   }
 }
@@ -191,8 +192,8 @@ export async function fetchOrdersByMaker(client: ArkivReader, maker: Address) {
   return (res.entities as Record<string, unknown>[]).map(entityToOrder)
 }
 
-export async function fetchAssets(client: ArkivReader) {
-  const res = await client.select().from(Asset).where(eq("assetType", "invoice-bond")).limit(50).fetch()
+export async function fetchAssets(client: ArkivReader, assetType = "invoice-note") {
+  const res = await client.select().from(Asset).where(eq("assetType", assetType)).limit(50).fetch()
   return res.entities as Record<string, unknown>[]
 }
 

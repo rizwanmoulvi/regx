@@ -7,6 +7,10 @@ const KIND: Record<string, { label: string; tone: "bid" | "ask" | "accent" | "wa
   coupon_set: { label: "Coupon set", tone: "accent" },
   coupon_paid: { label: "Coupon paid", tone: "bid" },
   coupon_scheduled: { label: "Coupon scheduled", tone: "accent" },
+  subscribe: { label: "Subscription", tone: "accent" },
+  redeemed: { label: "Maturity repaid", tone: "bid" },
+  redeem_holder: { label: "Redeemed", tone: "bid" },
+  coupon_holder: { label: "Coupon received", tone: "bid" },
   freeze: { label: "Freeze", tone: "ask" },
   unfreeze: { label: "Unfreeze", tone: "bid" },
   pause: { label: "Pause", tone: "warn" },
@@ -32,10 +36,10 @@ export function Fills({ fills, symbol, loading }: { fills?: FillView[]; symbol?:
             <span className={`num font-semibold ${f.side === "sell" ? "text-bid" : "text-ask"}`}>{inr(f.price)}</span>
             <span className="text-xs text-muted">
               <span className="num text-ink">{f.amount.toString()}</span> {symbol ?? "units"} · <Addr a={f.taker} />{" "}
-              {f.side === "sell" ? "bought from" : "sold to"} <Addr a={f.maker} /> · {ago(f.timestamp)}
+              {f.side === "sell" ? "bought from" : "sold to"} <Addr a={f.maker} /> for {inr(f.cost)} · {ago(f.timestamp)}
             </span>
             <span className="flex flex-col items-end gap-0.5">
-              <TxLink hash={f.hederaTx} label="HashScan" />
+              <TxLink hash={f.tx} label="Explorer" />
               <EntityLink entityKey={f.entityKey} label="Arkiv" />
             </span>
           </li>
@@ -69,7 +73,7 @@ export function Actions({ actions, loading }: { actions?: ActionView[]; loading?
                     schedule {a.meta.schedules[0].scheduleId} ↗
                   </a>
                 ) : (
-                  <TxLink hash={a.hederaTx?.startsWith("0x") ? a.hederaTx : undefined} label="HashScan" />
+                  <TxLink hash={a.tx?.startsWith("0x") ? a.tx : undefined} label="Explorer" />
                 )}
                 <EntityLink entityKey={a.entityKey} label="Arkiv" />
               </span>

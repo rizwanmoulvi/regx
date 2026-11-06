@@ -1,9 +1,9 @@
 /** Prints the live state of RegX on Hedera and Arkiv: balances, eligibility, order book, fills. */
 import { formatUnits } from "viem"
-import { atsSecurityAbi } from "../shared/src/abis/ats"
-import { identityRegistryAbi, regXDvPAbi, tINRAbi } from "../shared/src/abis/generated"
-import { fetchActions, fetchBook, fetchFills, v } from "../shared/src/arkiv"
-import { ROLES, account, arkiv, hedera, log, read, requireDeployment } from "./lib/env"
+import { atsSecurityAbi } from "../../shared/src/abis/ats"
+import { identityRegistryAbi, regXDvPAbi, tINRAbi } from "../../shared/src/abis/generated"
+import { fetchActions, fetchBook, fetchFills, v } from "../../shared/src/arkiv"
+import { ROLES, account, arkiv, hedera, log, read, requireDeployment } from "../lib/env"
 
 const d = requireDeployment()
 

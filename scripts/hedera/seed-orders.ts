@@ -7,9 +7,9 @@
  */
 import { pathToFileURL } from "node:url"
 import type { Hex } from "viem"
-import { LIFETIME, OrderEntity, orderToEntity } from "../shared/src/arkiv"
-import { type Order, hashOrder, orderTypedData, randomNonce } from "../shared/src/order"
-import { type Role, account, arkivWalletFor, log, requireDeployment } from "./lib/env"
+import { LIFETIME, OrderEntity, orderToEntity } from "../../shared/src/arkiv"
+import { type Order, hashOrder, orderTypedData, randomNonce } from "../../shared/src/order"
+import { type Role, account, arkivWalletFor, log, requireDeployment } from "../lib/env"
 
 const d = requireDeployment()
 const INR = 10n ** 6n

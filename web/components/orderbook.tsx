@@ -54,7 +54,7 @@ export function OrderBook({
         </>
       )}
       <p className="border-t border-line px-4 py-2 text-[11px] text-muted">
-        Signed orders are Arkiv entities owned by their makers. Remaining size is read from the DvP contract on Hedera. Expired orders
+        Signed orders are Arkiv entities owned by their makers. Remaining size is read from the DvP contract on Whitechain. Expired orders
         drop out of Arkiv on their own.
       </p>
     </div>

@@ -1,9 +1,9 @@
 /** Fills the README deployment block (between DEPLOYMENT markers) from shared/deployments/hedera-testnet.json + live Arkiv counts. */
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { Action, Asset, Fill, OrderEntity } from "../shared/src/arkiv"
-import { ARKIV_EXPLORER, HASHSCAN } from "../shared/src/chains"
-import { ROOT, arkiv, loadDeployment } from "./lib/env"
+import { Action, Asset, Fill, OrderEntity } from "../../shared/src/arkiv"
+import { ARKIV_EXPLORER, HASHSCAN } from "../../shared/src/chains"
+import { ROOT, arkiv, loadDeployment } from "../lib/env"
 
 const d = loadDeployment() as any
 const c = (a?: string) => (a ? `[\`${a}\`](${HASHSCAN}/contract/${a})` : "—")
@@ -50,7 +50,7 @@ await arkiv.select().from(OrderEntity)
 `
   const p = join(ROOT, "README.md")
   const readme = readFileSync(p, "utf8")
-  const out = readme.replace(/<!-- DEPLOYMENT:START -->[\s\S]*<!-- DEPLOYMENT:END -->/, `<!-- DEPLOYMENT:START -->\n${block}<!-- DEPLOYMENT:END -->`)
+  const out = readme.replace(/<!-- HEDERA:START -->[\s\S]*<!-- HEDERA:END -->/, `<!-- HEDERA:START -->\n${block}<!-- HEDERA:END -->`)
   writeFileSync(p, out)
   console.log("README deployment block updated")
 }

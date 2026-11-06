@@ -5,19 +5,19 @@ import {
   LIFETIME,
   type Order,
   OrderEntity,
-  atsSecurityAbi,
+  WC_CHAIN_ID,
   explainError,
   hashOrder,
   orderToEntity,
   orderTypedData,
   randomNonce,
   regXDvPAbi,
-  tINRAbi,
-  hederaTestnet,
+  regXNoteAbi,
+  tokenAbi,
 } from "@regx/shared"
 import { getAccount, signTypedData, switchChain, waitForTransactionReceipt, writeContract } from "wagmi/actions"
-import { type Address, type Hex, custom, maxUint256, parseUnits } from "viem"
-import { arkiv, d, hederaClient, wagmiConfig } from "./config"
+import { type Address, type Hex, custom, erc20Abi, maxUint256, parseUnits } from "viem"
+import { arkiv, chainClient, d, note, wagmiConfig } from "./config"
 
 export async function ensureChain(chainId: number) {
   const acc = getAccount(wagmiConfig)
@@ -36,7 +36,6 @@ function arkivWallet() {
   return createArkivWalletClient({ chain: arkiv, transport: custom(eth), account: me() })
 }
 
-/** Sends a Hedera tx after a dry run, so the user sees the decoded revert reason instead of a failed tx. */
 export class RevertedOnChain extends Error {
   constructor(public hash: Hex) {
     super(`Reverted on-chain: ${hash}`)
@@ -44,72 +43,70 @@ export class RevertedOnChain extends Error {
 }
 
 /**
- * Sends a Hedera tx after a dry run, so the user sees the decoded revert reason instead of a failed tx.
- * `force` skips the dry run and sends with a fixed gas limit, which puts a compliance rejection on-chain
- * (visible on HashScan) for demos.
+ * Sends a Whitechain tx after a dry run, so the user sees the decoded reason instead of a failed tx.
+ * `force` skips the dry run and uses a fixed gas limit, so a compliance rejection lands on-chain (for demos).
  */
-async function hederaWrite(params: { address: Address; abi: any; functionName: string; args: unknown[] }, force = false) {
-  await ensureChain(hederaTestnet.id)
+async function write(params: { address: Address; abi: any; functionName: string; args: unknown[] }, force = false) {
+  await ensureChain(WC_CHAIN_ID)
   if (!force) {
     try {
-      await hederaClient.simulateContract({ ...params, account: me() } as any)
+      await chainClient.simulateContract({ ...params, account: me() } as any)
     } catch (e) {
       throw new Error(explainError(e))
     }
   }
-  const hash = await writeContract(wagmiConfig, {
-    ...params,
-    chainId: hederaTestnet.id,
-    ...(force ? { gas: 1_500_000n } : {}),
-  } as any)
-  const r = await waitForTransactionReceipt(wagmiConfig, { hash, chainId: hederaTestnet.id, timeout: 120_000 })
+  const hash = await writeContract(wagmiConfig, { ...params, chainId: WC_CHAIN_ID, ...(force ? { gas: 600_000n } : {}) } as any)
+  const r = await waitForTransactionReceipt(wagmiConfig, { hash, chainId: WC_CHAIN_ID, timeout: 90_000 })
   if (r.status !== "success") throw new RevertedOnChain(hash)
   return hash
 }
 
-export const approveTinr = () =>
-  hederaWrite({ address: d.tinr!, abi: tINRAbi, functionName: "approve", args: [d.dvp, maxUint256] })
+export const approveUsdt = (spender: Address) =>
+  write({ address: d.usdt!, abi: erc20Abi, functionName: "approve", args: [spender, maxUint256] })
 
-export const approveBond = (amount = 1_000_000n) =>
-  hederaWrite({ address: d.bond!.address, abi: atsSecurityAbi, functionName: "approve", args: [d.dvp, amount] })
+export const approveUnits = (amount = 1_000_000n) =>
+  write({ address: note!.token, abi: tokenAbi, functionName: "approve", args: [d.dvp, amount] })
 
-export const tinrFaucet = () => hederaWrite({ address: d.tinr!, abi: tINRAbi, functionName: "faucet", args: [] })
+/** Primary issuance: pay the issue price in USDT, units are minted after ERC-3643 checks. */
+export const subscribe = (units: bigint) => write({ address: note!.note, abi: regXNoteAbi, functionName: "subscribe", args: [units] })
+
+/** Permissionless settlement once due: anyone can trigger, funds come from the issuer's USDT allowance. */
+export const payCoupon = (index: number) => write({ address: note!.note, abi: regXNoteAbi, functionName: "payCoupon", args: [BigInt(index)] })
+export const settleMaturity = () => write({ address: note!.note, abi: regXNoteAbi, functionName: "settleMaturity", args: [] })
 
 export type PostedOrder = { entityKey: Hex; orderHash: Hex; txHash: Hex }
 
-/** Maker flow: sign the EIP-712 order on Hedera's domain, then publish it to Arkiv from the maker's wallet. */
-export async function postOrder(p: { side: "buy" | "sell"; amount: bigint; priceInr: string; ttlSeconds: number }): Promise<PostedOrder> {
+/** Maker flow: sign the EIP-712 order for the Whitechain DvP, then publish it to Arkiv from the maker's wallet. */
+export async function postOrder(p: { side: "buy" | "sell"; amount: bigint; price: string; ttlSeconds: number }): Promise<PostedOrder> {
   const maker = me()
   const order: Order = {
     maker,
-    security: d.bond!.address,
-    payToken: d.tinr!,
+    security: note!.token,
+    payToken: d.usdt!,
     isSell: p.side === "sell",
-    price: parseUnits(p.priceInr, 6),
+    price: parseUnits(p.price, 6),
     amount: p.amount,
     nonce: randomNonce(),
     expiry: BigInt(Math.floor(Date.now() / 1000) + p.ttlSeconds),
   }
-  await ensureChain(hederaTestnet.id)
-  const signature = await signTypedData(wagmiConfig, orderTypedData(d.dvp!, order) as any)
-  const orderHash = hashOrder(d.dvp!, order)
-
+  await ensureChain(WC_CHAIN_ID)
+  const signature = await signTypedData(wagmiConfig, orderTypedData(d.dvp!, order, WC_CHAIN_ID) as any)
+  const orderHash = hashOrder(d.dvp!, order, WC_CHAIN_ID)
   await ensureChain(arkiv.id)
   const { entityKey, txHash } = await arkivWallet().createEntity(
     OrderEntity,
-    orderToEntity(order, orderHash, signature, d.dvp!),
+    orderToEntity(order, orderHash, signature, d.dvp!, WC_CHAIN_ID),
     { expiration: LIFETIME.order(order.expiry) },
   )
   return { entityKey, orderHash, txHash }
 }
 
-/** Taker flow: atomic DvP on Hedera. Compliance (ERC-3643) is enforced by the ATS token inside the tx. */
-export async function fillOrder(o: { order: Order; signature: Hex; amount: bigint }, force = false) {
-  return hederaWrite({ address: d.dvp!, abi: regXDvPAbi, functionName: "fill", args: [o.order, o.signature, o.amount] }, force)
-}
+/** Taker flow: atomic DvP in USDT on Whitechain; the T-REX token enforces ERC-3643 inside the tx. */
+export const fillOrder = (o: { order: Order; signature: Hex; amount: bigint }, force = false) =>
+  write({ address: d.dvp!, abi: regXDvPAbi, functionName: "fill", args: [o.order, o.signature, o.amount] }, force)
 
 export async function cancelOrder(o: { order: Order; entityKey: Hex; owner: Address }) {
-  const hash = await hederaWrite({ address: d.dvp!, abi: regXDvPAbi, functionName: "cancel", args: [o.order.nonce] })
+  const hash = await write({ address: d.dvp!, abi: regXDvPAbi, functionName: "cancel", args: [o.order.nonce] })
   if (o.owner.toLowerCase() === me().toLowerCase()) {
     await ensureChain(arkiv.id)
     await arkivWallet().deleteEntity({ entityKey: o.entityKey })
@@ -118,7 +115,7 @@ export async function cancelOrder(o: { order: Order; entityKey: Hex; owner: Addr
 }
 
 export async function checkFill(order: Order, taker: Address, amount: bigint) {
-  const [ok, reason] = (await hederaClient.readContract({
+  const [ok, reason] = (await chainClient.readContract({
     address: d.dvp!,
     abi: regXDvPAbi,
     functionName: "checkFill",
@@ -127,11 +124,10 @@ export async function checkFill(order: Order, taker: Address, amount: bigint) {
   return { ok, reason }
 }
 
-// ---------------------------------------------------------------------- issuer (requires issuer roles)
+// ---------------------------------------------------------------------- issuer agent (T-REX token agent role)
 
 export const issuer = {
-  freeze: (who: Address, frozen: boolean) =>
-    hederaWrite({ address: d.bond!.address, abi: atsSecurityAbi, functionName: "setAddressFrozen", args: [who, frozen] }),
-  pause: () => hederaWrite({ address: d.bond!.address, abi: atsSecurityAbi, functionName: "pause", args: [] }),
-  unpause: () => hederaWrite({ address: d.bond!.address, abi: atsSecurityAbi, functionName: "unpause", args: [] }),
+  freeze: (who: Address, frozen: boolean) => write({ address: note!.token, abi: tokenAbi, functionName: "setAddressFrozen", args: [who, frozen] }),
+  pause: () => write({ address: note!.token, abi: tokenAbi, functionName: "pause", args: [] }),
+  unpause: () => write({ address: note!.token, abi: tokenAbi, functionName: "unpause", args: [] }),
 }

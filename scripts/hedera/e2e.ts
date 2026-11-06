@@ -8,12 +8,12 @@
  *   npm run e2e
  */
 import { formatUnits, type Hex } from "viem"
-import { atsSecurityAbi } from "../shared/src/abis/ats"
-import { regXDvPAbi, tINRAbi } from "../shared/src/abis/generated"
-import { fetchBook, fetchFills, v } from "../shared/src/arkiv"
-import { explainReason } from "../shared/src/reasons"
-import { HEDERA_GAS, hashscanTx } from "../shared/src/chains"
-import { account, arkiv, hedera, hederaWallet, log, read, requireDeployment, send, sleep } from "./lib/env"
+import { atsSecurityAbi } from "../../shared/src/abis/ats"
+import { regXDvPAbi, tINRAbi } from "../../shared/src/abis/generated"
+import { fetchBook, fetchFills, v } from "../../shared/src/arkiv"
+import { explainReason } from "../../shared/src/reasons"
+import { HEDERA_GAS, hashscanTx } from "../../shared/src/chains"
+import { account, arkiv, hedera, hederaWallet, log, read, requireDeployment, send, sleep } from "../lib/env"
 import { publishOrder } from "./seed-orders"
 
 const d = requireDeployment()

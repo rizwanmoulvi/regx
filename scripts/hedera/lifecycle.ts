@@ -14,12 +14,12 @@
  */
 import { addr, u64 } from "@arkiv-network/sdk/schema"
 import { type Address, type Hex, encodeAbiParameters, encodeFunctionData, formatUnits, keccak256, toHex } from "viem"
-import { atsSecurityAbi } from "../shared/src/abis/ats"
-import { identityAbi, identityRegistryAbi, tINRAbi } from "../shared/src/abis/generated"
-import { Action, LIFETIME, toJsonBytes } from "../shared/src/arkiv"
-import { HEDERA_GAS } from "../shared/src/chains"
-import { hashscanSchedule, scheduleContractCall, scheduleStatus } from "./lib/hiero"
-import { type Role, ROLES, account, arkivWalletFor, deploy, hedera, loadDeployment, log, read, requireDeployment, saveDeployment, send, simulateAndSend, sleep } from "./lib/env"
+import { atsSecurityAbi } from "../../shared/src/abis/ats"
+import { identityAbi, identityRegistryAbi, tINRAbi } from "../../shared/src/abis/generated"
+import { Action, LIFETIME, toJsonBytes } from "../../shared/src/arkiv"
+import { HEDERA_GAS } from "../../shared/src/chains"
+import { hashscanSchedule, scheduleContractCall, scheduleStatus } from "./hiero"
+import { type Role, ROLES, account, arkivWalletFor, deploy, hedera, loadDeployment, log, read, requireDeployment, saveDeployment, send, simulateAndSend, sleep } from "../lib/env"
 
 const d = requireDeployment()
 const bond = d.bond.address

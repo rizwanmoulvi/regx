@@ -26,16 +26,17 @@ export const ORDER_TYPES = {
   ],
 } as const
 
-export const orderDomain = (dvp: Address) =>
-  ({ name: "RegX", version: "1", chainId: HEDERA_CHAIN_ID, verifyingContract: dvp }) as const
+export const orderDomain = (dvp: Address, chainId: number = HEDERA_CHAIN_ID) =>
+  ({ name: "RegX", version: "1", chainId, verifyingContract: dvp }) as const
 
-export const orderTypedData = (dvp: Address, order: Order) =>
-  ({ domain: orderDomain(dvp), types: ORDER_TYPES, primaryType: "Order", message: order }) as const
+export const orderTypedData = (dvp: Address, order: Order, chainId: number = HEDERA_CHAIN_ID) =>
+  ({ domain: orderDomain(dvp, chainId), types: ORDER_TYPES, primaryType: "Order", message: order }) as const
 
-export const hashOrder = (dvp: Address, order: Order): Hex => hashTypedData(orderTypedData(dvp, order))
+export const hashOrder = (dvp: Address, order: Order, chainId: number = HEDERA_CHAIN_ID): Hex =>
+  hashTypedData(orderTypedData(dvp, order, chainId))
 
-export async function verifyOrderSignature(dvp: Address, order: Order, signature: Hex): Promise<boolean> {
-  const signer = await recoverTypedDataAddress({ ...orderTypedData(dvp, order), signature })
+export async function verifyOrderSignature(dvp: Address, order: Order, signature: Hex, chainId: number = HEDERA_CHAIN_ID): Promise<boolean> {
+  const signer = await recoverTypedDataAddress({ ...orderTypedData(dvp, order, chainId), signature })
   return signer.toLowerCase() === order.maker.toLowerCase()
 }
 

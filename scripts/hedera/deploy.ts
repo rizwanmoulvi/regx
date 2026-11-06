@@ -12,7 +12,7 @@
  *   7. Mirror the asset to Arkiv (scripts/arkiv-sync-assets.ts)
  */
 import { type Address, type Hex, encodeAbiParameters, encodeFunctionData, keccak256, maxUint256, parseEther, parseEventLogs, stringToHex, toHex } from "viem"
-import { ATS_CONFIG_IDS, ATS_ROLES, atsFactoryAbi, atsResolverAbi, atsSecurityAbi } from "../shared/src/abis/ats"
+import { ATS_CONFIG_IDS, ATS_ROLES, atsFactoryAbi, atsResolverAbi, atsSecurityAbi } from "../../shared/src/abis/ats"
 import {
   claimIssuerAbi,
   claimTopicsRegistryAbi,
@@ -23,9 +23,9 @@ import {
   modularComplianceAbi,
   tINRAbi,
   trustedIssuersRegistryAbi,
-} from "../shared/src/abis/generated"
-import { HEDERA_GAS } from "../shared/src/chains"
-import type { Deployment } from "../shared/src/deployments"
+} from "../../shared/src/abis/generated"
+import { HEDERA_GAS } from "../../shared/src/chains"
+import type { Deployment } from "../../shared/src/deployments"
 import { syncAssets } from "./arkiv-sync-assets"
 import {
   type Role,
@@ -43,7 +43,7 @@ import {
   send,
   simulateAndSend,
   waitOk,
-} from "./lib/env"
+} from "../lib/env"
 
 /** Live ATS infrastructure on Hedera testnet (asset-tokenization-studio apps/ats/web/.env.example). */
 export const ATS_TESTNET = {

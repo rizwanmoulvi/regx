@@ -31,7 +31,7 @@ schemas) meant `as unknown as Record<string, unknown>[]` casts plus a small `v()
 helper that returns bare JS values (bigint, string, Hex).
 
 ## 6. Users need tGLM to own their entities
-Maker-owned orders are the best part of the design, but every maker needs Rabdi gas *in addition to* Hedera gas. For a user coming from
+Maker-owned orders are the best part of the design, but every maker needs Rabdi gas *in addition to* Whitechain gas. For a user coming from
 another chain that's a second faucet and a second network in MetaMask. **Wish:** sponsored or meta-transaction writes, where the user
 signs and a sponsor pays but the user is still recorded as `$owner`. We kept a keeper-relayed path in mind as the fallback.
 
@@ -47,5 +47,5 @@ it easy for apps to link "view on Arkiv" next to every row, which we think every
 - `defineSchema` + `select().from(schema).where(...)` gives typed columns, checks indexes at compile time, and `query.toString()` shows the
   wire query. That's great for debugging.
 - `orderBy(asc("price"))` on a `dec` column made the order book a single query.
-- Same viem account and key on Hedera and Arkiv: one ECDSA key gives the same address on both chains.
+- Same viem account and key on Whitechain and Arkiv: one ECDSA key gives the same address on both chains.
 - `ownedBy(addr)` made the keeper's idempotent upsert trivial.

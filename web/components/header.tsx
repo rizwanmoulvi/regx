@@ -89,7 +89,7 @@ function Connect() {
           ) : (
             <span className="rounded-md bg-ask-soft px-2 py-1 font-semibold text-ask">Not verified</span>
           )}
-          <span className="num text-muted">₹{fmtMoney(st.tinr)}</span>
+          <span className="num text-muted">{fmtMoney(st.usdt, 6, 2)} USDT</span>
         </div>
       )}
       <button className="btn btn-ghost num" onClick={() => disconnect()} title="Disconnect">

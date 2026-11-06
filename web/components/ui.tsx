@@ -1,11 +1,13 @@
 "use client"
 
-import { arkivAddressUrl, arkivEntityUrl, hashscanAddress, hashscanTx } from "@regx/shared"
+import { arkivAddressUrl, arkivEntityUrl, wcAddress, wcTx } from "@regx/shared"
 import type { ReactNode } from "react"
 import { nameOf } from "@/lib/config"
 
-export const inr = (n: number | bigint, frac = 2) =>
-  `₹${Number(n).toLocaleString("en-IN", { maximumFractionDigits: frac, minimumFractionDigits: 0 })}`
+export const usd = (n: number | bigint, frac = 4) =>
+  `${Number(n).toLocaleString("en-US", { maximumFractionDigits: frac, minimumFractionDigits: 0 })} USDT`
+/** kept for existing call sites */
+export const inr = usd
 
 export const ago = (ts: number) => {
   const s = Math.max(0, Math.floor(Date.now() / 1000 - ts))
@@ -38,7 +40,7 @@ export function Badge({ tone = "muted", children }: { tone?: "bid" | "ask" | "ac
 export function TxLink({ hash, label }: { hash?: string; label?: string }) {
   if (!hash || hash === "0x") return null
   return (
-    <a className="link num text-xs" href={hashscanTx(hash)} target="_blank" rel="noreferrer">
+    <a className="link num text-xs" href={wcTx(hash)} target="_blank" rel="noreferrer">
       {label ?? `${hash.slice(0, 8)}…${hash.slice(-4)}`} ↗
     </a>
   )
@@ -55,7 +57,7 @@ export function EntityLink({ entityKey, label }: { entityKey?: string; label?: s
 
 export function Addr({ a, chain = "hedera" }: { a?: string; chain?: "hedera" | "arkiv" }) {
   if (!a) return null
-  const href = chain === "hedera" ? hashscanAddress(a) : arkivAddressUrl(a)
+  const href = chain === "hedera" ? wcAddress(a) : arkivAddressUrl(a)
   return (
     <a className="link num text-xs" href={href} target="_blank" rel="noreferrer" title={a}>
       {nameOf(a)}
@@ -71,7 +73,7 @@ export function ArkivTag({ children = "from Arkiv" }: { children?: ReactNode }) 
   )
 }
 
-export function HederaTag({ children = "Hedera" }: { children?: ReactNode }) {
+export function HederaTag({ children = "Whitechain" }: { children?: ReactNode }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
       <span className="h-1.5 w-1.5 rounded-full bg-bid" /> {children}

@@ -14,7 +14,7 @@ import {
 } from "@hiero-ledger/sdk"
 import type { Address, Hex } from "viem"
 import { HEDERA_MIRROR } from "../../shared/src/chains"
-import { account, key } from "./env"
+import { account, key } from "../lib/env"
 
 export async function accountIdOf(evm: Address): Promise<string> {
   const r = await fetch(`${HEDERA_MIRROR}/accounts/${evm}`)

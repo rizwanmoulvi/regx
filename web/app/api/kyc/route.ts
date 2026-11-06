@@ -2,10 +2,10 @@
  * Demo KYC desk (opt-in): lets judges try RegX with their own wallet.
  * The server acts as the compliance agent. It deploys an ONCHAINID for the wallet, signs a KYC claim
  * with the trusted claim issuer key, registers the identity in the T-REX Identity Registry, and drips
- * a little HBAR + tGLM for gas. Disabled unless DEMO_KYC_ENABLED=1; capped by DEMO_KYC_MAX.
+ * a little WBT + tGLM for gas. Disabled unless DEMO_KYC_ENABLED=1; capped by DEMO_KYC_MAX.
  */
 import { createWalletClient as createArkivWallet, createPublicClient as createArkivPublic } from "@arkiv-network/sdk"
-import { arkivChain, deployment as d, hederaTestnet, identityAbi, identityRegistryAbi, HEDERA_GAS } from "@regx/shared"
+import { arkivChain, identityAbi, identityRegistryAbi, wcDeployment as d, whitechainSepolia } from "@regx/shared"
 import { identityBytecode } from "@regx/shared/bytecode"
 import { NextResponse } from "next/server"
 import {
@@ -22,7 +22,7 @@ import {
 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 
-const RPC = process.env.HEDERA_RPC_URL || "https://testnet.hashio.io/api"
+const RPC = process.env.WHITECHAIN_RPC_URL || "https://rpc.testnet.whitechain.io"
 const served = new Set<string>()
 
 export async function POST(req: Request) {
@@ -37,9 +37,9 @@ export async function POST(req: Request) {
   served.add(wallet.toLowerCase())
 
   const agent = privateKeyToAccount(pk)
-  const pub = createPublicClient({ chain: hederaTestnet, transport: http(RPC) })
-  const w = createWalletClient({ chain: hederaTestnet, transport: http(RPC), account: agent })
-  const opts = { gasPrice: HEDERA_GAS.price, type: "legacy" as const }
+  const pub = createPublicClient({ chain: whitechainSepolia, transport: http(RPC) })
+  const w = createWalletClient({ chain: whitechainSepolia, transport: http(RPC), account: agent })
+  const opts = {}
   const wait = async (hash: Hex) => {
     for (let i = 0; i < 90; i++) {
       try {
@@ -59,21 +59,21 @@ export async function POST(req: Request) {
     if (await pub.readContract({ address: d.trex.identityRegistry, abi: identityRegistryAbi, functionName: "isVerified", args: [wallet] }))
       return NextResponse.json({ ok: true, already: true })
 
-    txs.identity = await w.deployContract({ abi: identityAbi, bytecode: identityBytecode, args: [agent.address, false], gas: 2_600_000n, ...opts })
+    txs.identity = await w.deployContract({ abi: identityAbi, bytecode: identityBytecode, args: [agent.address, false], ...opts })
     const identity = (await wait(txs.identity)).contractAddress as Address
 
     const data = toHex(`KYC:IN:demo:${wallet.toLowerCase()}`)
     const digest = keccak256(encodeAbiParameters([{ type: "address" }, { type: "uint256" }, { type: "bytes" }], [identity, 1n, data]))
     const sig = await agent.signMessage({ message: { raw: digest } })
-    txs.claim = await w.writeContract({ address: identity, abi: identityAbi, functionName: "addClaim", args: [1n, 1n, d.trex.claimIssuer, sig, data, "regx://kyc/demo"], gas: 600_000n, ...opts })
+    txs.claim = await w.writeContract({ address: identity, abi: identityAbi, functionName: "addClaim", args: [1n, 1n, d.trex.claimIssuer, sig, data, "regx://kyc/demo"], ...opts })
     await wait(txs.claim)
-    txs.register = await w.writeContract({ address: d.trex.identityRegistry, abi: identityRegistryAbi, functionName: "registerIdentity", args: [wallet, identity, 356], gas: 900_000n, ...opts })
+    txs.register = await w.writeContract({ address: d.trex.identityRegistry, abi: identityRegistryAbi, functionName: "registerIdentity", args: [wallet, identity, 356], ...opts })
     await wait(txs.register)
 
     // gas drip so the wallet can approve, trade and publish orders
-    if ((await pub.getBalance({ address: wallet })) < parseEther("1")) {
-      txs.hbar = await w.sendTransaction({ to: wallet, value: parseEther("2"), gas: 1_500_000n, ...opts })
-      await wait(txs.hbar)
+    if ((await pub.getBalance({ address: wallet })) < parseEther("0.005")) {
+      txs.wbt = await w.sendTransaction({ to: wallet, value: parseEther("0.01") })
+      await wait(txs.wbt)
     }
     const ark = arkivChain(process.env.NEXT_PUBLIC_ARKIV_ACCESS_KEY ?? "")
     const arkPub = createArkivPublic({ chain: ark, transport: http() })

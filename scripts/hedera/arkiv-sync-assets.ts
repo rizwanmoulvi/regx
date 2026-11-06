@@ -10,9 +10,9 @@ import { eq } from "@arkiv-network/sdk/query"
 import { addr, dec, u64 } from "@arkiv-network/sdk/schema"
 import { pathToFileURL } from "node:url"
 import { type Address, type Hex } from "viem"
-import { atsSecurityAbi } from "../shared/src/abis/ats"
-import { Asset, toJsonBytes, v } from "../shared/src/arkiv"
-import { account, arkiv, arkivWalletFor, log, read, requireDeployment } from "./lib/env"
+import { atsSecurityAbi } from "../../shared/src/abis/ats"
+import { Asset, toJsonBytes, v } from "../../shared/src/arkiv"
+import { account, arkiv, arkivWalletFor, log, read, requireDeployment } from "../lib/env"
 
 export async function readBondState(bond: Address) {
   const [name, symbol, decimals, totalSupply, maxSupply, maturity, nominal, nominalDec, paused, holders] =

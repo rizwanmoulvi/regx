@@ -26,10 +26,31 @@ const DVP_CODES: Record<string, string> = {
   CANCELLED: "Order cancelled by maker",
   OVERFILL: "Amount exceeds what is left on the order",
   SELF_FILL: "You cannot fill your own order",
-  PAY_BALANCE: "Not enough tINR",
-  PAY_ALLOWANCE: "Approve tINR for the DvP contract first",
+  PAY_BALANCE: "Not enough USDT",
+  PAY_ALLOWANCE: "Approve USDT for the DvP contract first",
   SECURITY_BLOCKED: "Security transfer not allowed",
+  // T-REX (ERC-3643) checks
+  PAUSED: "Trading is paused by the issuer",
+  FROZEN: "A wallet in this trade is frozen by the issuer",
+  SELLER_BALANCE: "Seller no longer holds enough units",
+  SELLER_ALLOWANCE: "Seller has not approved the DvP contract",
+  NOT_VERIFIED: "Not a verified investor: no valid KYC claim in the ERC-3643 Identity Registry",
+  COMPLIANCE: "Blocked by ERC-3643 compliance (holding cap, or the note has matured)",
 }
+
+/** Revert strings raised by T-REX Token / RegXNote. */
+const REVERTS: [string, string][] = [
+  ["Transfer not possible", "Rejected by ERC-3643: the buyer is not verified or compliance blocks the transfer"],
+  ["Identity is not verified.", "Not a verified investor: no valid KYC claim in the ERC-3643 Identity Registry"],
+  ["Compliance not followed", "Blocked by ERC-3643 compliance (holding cap or subscription window)"],
+  ["wallet is frozen", "A wallet in this trade is frozen by the issuer"],
+  ["Pausable: paused", "Trading is paused by the issuer"],
+  ["SubscriptionClosed", "The subscription window has closed"],
+  ["NotDue", "Not due yet"],
+  ["AlreadyPaid", "Already settled"],
+  ["insufficient allowance", "USDT allowance too low: approve first (or the issuer has not funded this payment)"],
+  ["transfer amount exceeds balance", "Not enough USDT"],
+]
 
 export function explainReason(code: Hex): { code: string; message: string } {
   const selector = code.slice(0, 10).toLowerCase()
@@ -50,6 +71,7 @@ export function explainError(err: unknown): string {
     text += JSON.stringify(err, Object.getOwnPropertyNames(err ?? {}))
   } catch {}
   for (const [sel, msg] of Object.entries(SELECTORS)) if (text.includes(sel.slice(2))) return msg
+  for (const [needle, msg] of REVERTS) if (text.includes(needle)) return msg
   const name = e?.cause?.data?.errorName ?? e?.cause?.cause?.data?.errorName
   if (name) return `Reverted: ${name}`
   return e?.shortMessage ?? e?.message ?? String(err)

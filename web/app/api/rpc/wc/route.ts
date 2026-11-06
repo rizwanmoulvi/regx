@@ -1,5 +1,5 @@
-/** Same-origin JSON-RPC proxy to the Hedera testnet relay (Hashio), retrying the relay's transient 5xx errors. */
-const UPSTREAMS = (process.env.HEDERA_RPC_URLS || process.env.HEDERA_RPC_URL || "https://testnet.hashio.io/api").split(",")
+/** Same-origin JSON-RPC proxy to the Whitechain Sepolia RPC, retrying the relay's transient 5xx errors. */
+const UPSTREAMS = (process.env.WHITECHAIN_RPC_URLS || "https://rpc.testnet.whitechain.io").split(",")
 
 export async function POST(req: Request) {
   const body = await req.text()

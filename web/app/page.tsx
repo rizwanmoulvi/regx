@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { d } from "@/lib/config"
 import { type AssetView, useAssets, useBook, useFills } from "@/lib/data"
 import { ArkivTag, Badge, EntityLink, Empty, HederaTag, inr } from "@/components/ui"
 
@@ -12,20 +11,20 @@ export default function Markets() {
     <div className="space-y-8">
       <section className="grid gap-6 pt-2 md:grid-cols-[1.4fr_1fr] md:items-end">
         <div>
-          <p className="label text-accent">Invoice-backed bonds · India</p>
+          <p className="label text-accent">Invoice financing · Whitechain · USDT</p>
           <h1 className="mt-2 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
-            Exit your invoice note before maturity, and trade only with verified investors.
+            Fund invoices in USDT, exit before maturity, and trade only with verified investors.
           </h1>
           <p className="mt-3 max-w-xl text-muted">
-            Bonds are issued with <b className="text-ink">Hedera Asset Tokenization Studio</b> and protected by{" "}
-            <b className="text-ink">ERC-3643 (T-REX)</b> identity and compliance. Orders live on{" "}
-            <b className="text-ink">Arkiv</b>: public, queryable by anyone, and they expire on their own.
+            An MSME tokenizes a receivable as an <b className="text-ink">ERC-3643 (T-REX)</b> note on{" "}
+            <b className="text-ink">Whitechain</b>. Investors fund it at a discount, receive coupons and repayment in{" "}
+            <b className="text-ink">USDT</b>, and trade it through an order book on <b className="text-ink">Arkiv</b> that anyone can read, where orders expire on their own.
           </p>
         </div>
         <div className="panel grid grid-cols-3 gap-3 p-4 text-center text-xs">
           <Step n="1" t="Sign" s="EIP-712 order" />
           <Step n="2" t="Publish" s="Arkiv entity" />
-          <Step n="3" t="Settle" s="Atomic DvP on Hedera" />
+          <Step n="3" t="Settle" s="Atomic DvP in USDT" />
         </div>
       </section>
 
@@ -38,7 +37,7 @@ export default function Markets() {
         {assets.error && <div className="panel p-4 text-sm text-ask">Could not read Arkiv: {String(assets.error)}</div>}
         {assets.data?.length === 0 && (
           <div className="panel">
-            <Empty>No assets on Arkiv yet. Run `npm run deploy`, then `npm run sync:assets`.</Empty>
+            <Empty>No notes on Arkiv yet. Run `npm run wc:deploy`.</Empty>
           </div>
         )}
         <div className="grid gap-4 md:grid-cols-2">
@@ -95,8 +94,8 @@ function AssetCard({ a }: { a: AssetView }) {
       </div>
       <div className="mt-4 grid grid-cols-4 gap-3 text-sm">
         <Kv k="Coupon" v={`${(a.couponBps / 100).toFixed(2)}%`} />
-        <Kv k="Face" v={inr(a.faceValue, 0)} />
-        <Kv k="Maturity" v={`${days}d`} />
+        <Kv k="Face" v={inr(a.faceValue)} />
+        <Kv k="Maturity" v={days > 0 ? `${days}d` : a.status} />
         <Kv k="Holders" v={a.holders.toString()} />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
@@ -110,10 +109,10 @@ function AssetCard({ a }: { a: AssetView }) {
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted">
-        <HederaTag>{a.hederaId || "Hedera"}</HederaTag>
+        <HederaTag>Whitechain</HederaTag>
         <span>asset entity</span>
         <EntityLink entityKey={a.entityKey} />
-        {d.bond?.address?.toLowerCase() === a.security.toLowerCase() && <span className="ml-auto">Issued via ATS factory</span>}
+        <span className="ml-auto">USDT settlement</span>
       </div>
       <div className="mt-4">
         <Link href={`/asset/${a.security}`} className="btn btn-primary w-full">
