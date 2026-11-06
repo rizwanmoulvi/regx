@@ -1,1 +1,33 @@
-{}
+{
+  "done": {
+    "tinr": "2026-11-06T20:33:41.736Z",
+    "dvp": "2026-11-06T20:33:50.281Z",
+    "investorCapModule": "2026-11-06T20:33:56.097Z",
+    "trex.claimTopicsRegistry": "2026-11-06T20:34:13.689Z",
+    "trex.claimIssuer": "2026-11-06T20:35:33.600Z",
+    "trex.trustedIssuersRegistry": "0x2c058fab4b73eed7579a4cb08f63a62c74512682fc91ade247ccbe75abc48c9c"
+  },
+  "txs": {},
+  "network": "hedera-testnet",
+  "chainId": 296,
+  "deployer": "0x900C96D56AdB24d6371cF1D7CE5b10E8899FE168",
+  "keeper": "0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5",
+  "investors": {
+    "alice": "0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753",
+    "bob": "0xf3fE188e80ed94EFbDCB1B51e343200381d83DE3",
+    "carol": "0x79Ef99E73c88D476Aa2D3A4Fdf8AcfE90C6c7B89"
+  },
+  "ats": {
+    "factory": "0xd1F118A40f3b02883D35909eF2517e7EDd78379d",
+    "resolver": "0xBA2D5FC2083A0b8f164c50e65d782087fBA18E0a",
+    "bondConfigVersion": ""
+  },
+  "tinr": "0x4fac16ebbf7fc90ce6a87aba487e8cbcd4db0f9f",
+  "dvp": "0xd422dbade01fba80b938e2772bb368e9518ff60c",
+  "investorCapModule": "0x4e130efe2850ad8e8514d0f6639309c4aab97199",
+  "trex": {
+    "claimTopicsRegistry": "0x265c06cd315d4078b0ddefe621dfba6654ae6520",
+    "claimIssuer": "0x1563e43d5475b1cf093b2eaa4912408db355aba1",
+    "trustedIssuersRegistry": "0x034488ed4f29dd273dbed1be3f510406df2ab2a3"
+  }
+}

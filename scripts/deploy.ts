@@ -71,6 +71,13 @@ d.done ??= {}
 d.txs ??= {}
 const save = () => saveDeployment(d)
 
+/** Runs a single transaction at most once across re-runs. */
+async function once(key: string, fn: () => Promise<string>) {
+  if (d.done![`tx:${key}`]) return
+  d.done![`tx:${key}`] = await fn()
+  save()
+}
+
 async function step(name: string, fn: () => Promise<string | void>) {
   if (d.done![name]) return log(`• ${name} (done)`)
   log(`• ${name}`)
@@ -92,21 +99,21 @@ async function main() {
   // ---------------------------------------------------------------- 1. funding
   const hbar = await hedera.getBalance({ address: deployer })
   log(`deployer ${deployer}: ${Number(hbar) / 1e18} HBAR`)
-  if (hbar < parseEther("60")) throw new Error("Fund the deployer with ≥60 testnet HBAR (portal.hedera.com/faucet)")
+  if (hbar < parseEther("40")) throw new Error("Fund the deployer with ≥40 testnet HBAR (portal.hedera.com/faucet)")
 
-  for (const role of ["alice", "bob", "carol", "keeper"] as Role[]) {
+  for (const role of ["alice", "bob", "carol"] as Role[]) {
     const a = account(role).address
     const bal = await hedera.getBalance({ address: a })
-    if (bal < parseEther("5")) {
+    if (bal < parseEther("3")) {
       const hash = await hederaWallet("deployer").sendTransaction({
         to: a,
-        value: parseEther("12"),
+        value: parseEther("6"),
         gas: 1_500_000n,
         gasPrice: HEDERA_GAS.price,
         type: "legacy",
       })
       await waitOk(hash, `fund ${role}`)
-      log(`  ✓ funded ${role} with 12 HBAR`)
+      log(`  ✓ funded ${role} with 6 HBAR`)
     }
   }
 
@@ -152,28 +159,40 @@ async function main() {
     await send("deployer", t.trustedIssuersRegistry, trustedIssuersRegistryAbi, "addTrustedIssuer", [t.claimIssuer, [KYC_TOPIC]])
   })
   await step("trex.identityRegistryStorage", async () => {
-    t.identityRegistryStorage = await deploy("deployer", "IdentityRegistryStorage")
-    save()
-    await send("deployer", t.identityRegistryStorage, identityRegistryStorageAbi, "init")
+    if (!t.identityRegistryStorage) {
+      t.identityRegistryStorage = await deploy("deployer", "IdentityRegistryStorage")
+      save()
+    }
+    await once("irs.init", () => send("deployer", t.identityRegistryStorage, identityRegistryStorageAbi, "init"))
   })
   await step("trex.identityRegistry", async () => {
-    t.identityRegistry = await deploy("deployer", "IdentityRegistry")
-    save()
-    await send("deployer", t.identityRegistry, identityRegistryAbi, "init", [
-      t.trustedIssuersRegistry,
-      t.claimTopicsRegistry,
-      t.identityRegistryStorage,
-    ])
-    await send("deployer", t.identityRegistryStorage, identityRegistryStorageAbi, "bindIdentityRegistry", [t.identityRegistry])
-    await send("deployer", t.identityRegistry, identityRegistryAbi, "addAgent", [deployer])
+    if (!t.identityRegistry) {
+      t.identityRegistry = await deploy("deployer", "IdentityRegistry")
+      save()
+    }
+    await once("ir.init", () =>
+      send("deployer", t.identityRegistry, identityRegistryAbi, "init", [
+        t.trustedIssuersRegistry,
+        t.claimTopicsRegistry,
+        t.identityRegistryStorage,
+      ]),
+    )
+    await once("irs.bind", () =>
+      send("deployer", t.identityRegistryStorage, identityRegistryStorageAbi, "bindIdentityRegistry", [t.identityRegistry]),
+    )
+    await once("ir.addAgent", () => send("deployer", t.identityRegistry, identityRegistryAbi, "addAgent", [deployer]))
   })
   await step("trex.modularCompliance", async () => {
-    t.modularCompliance = await deploy("deployer", "ModularCompliance")
-    save()
-    await send("deployer", t.modularCompliance, modularComplianceAbi, "init")
-    await send("deployer", t.modularCompliance, modularComplianceAbi, "addModule", [d.investorCapModule])
+    if (!t.modularCompliance) {
+      t.modularCompliance = await deploy("deployer", "ModularCompliance")
+      save()
+    }
+    await once("mc.init", () => send("deployer", t.modularCompliance, modularComplianceAbi, "init"))
+    await once("mc.addModule", () => send("deployer", t.modularCompliance, modularComplianceAbi, "addModule", [d.investorCapModule]))
     const call = encodeFunctionData({ abi: investorCapModuleAbi, functionName: "setMaxHolding", args: [BOND.investorCap] })
-    await send("deployer", t.modularCompliance, modularComplianceAbi, "callModuleFunction", [call, d.investorCapModule])
+    await once("mc.setMaxHolding", () =>
+      send("deployer", t.modularCompliance, modularComplianceAbi, "callModuleFunction", [call, d.investorCapModule]),
+    )
   })
 
   // ---------------------------------------------------------------- 4. ATS bond issuance
@@ -255,12 +274,23 @@ async function main() {
       gas: HEDERA_GAS.max,
     }).catch((e) => log(`  (simulation warning: ${e.shortMessage ?? e.message})`))
 
+    const est = await hedera
+      .estimateContractGas({
+        address: ATS_TESTNET.factory,
+        abi: atsFactoryAbi,
+        functionName: "deployBond",
+        args: [bondData as any, regulation],
+        account: account("deployer"),
+      })
+      .catch(() => undefined)
+    const bondGas = est ? ((est * 125n) / 100n > HEDERA_GAS.max ? HEDERA_GAS.max : (est * 125n) / 100n) : HEDERA_GAS.max
+    log(`  deployBond gas limit ${bondGas}${est ? ` (estimate ${est})` : " (estimate failed, using max)"}`)
     const hash = await hederaWallet("deployer").writeContract({
       address: ATS_TESTNET.factory,
       abi: atsFactoryAbi,
       functionName: "deployBond",
       args: [bondData as any, regulation],
-      gas: HEDERA_GAS.max,
+      gas: bondGas,
       gasPrice: HEDERA_GAS.price,
       type: "legacy",
     })
@@ -302,8 +332,12 @@ async function main() {
         encodeAbiParameters([{ type: "address" }, { type: "uint256" }, { type: "bytes" }], [identity, KYC_TOPIC, data]),
       )
       const signature = await account("deployer").signMessage({ message: { raw: digest } })
-      await send("deployer", identity, identityAbi, "addClaim", [KYC_TOPIC, 1n, t.claimIssuer, signature, data, "regx://kyc"], 2_000_000n)
-      await send("deployer", t.identityRegistry, identityRegistryAbi, "registerIdentity", [wallet, identity, INDIA], 2_000_000n)
+      await once(`claim.${role}`, () =>
+        send("deployer", identity, identityAbi, "addClaim", [KYC_TOPIC, 1n, t.claimIssuer, signature, data, "regx://kyc"], 2_000_000n),
+      )
+      await once(`register.${role}`, () =>
+        send("deployer", t.identityRegistry, identityRegistryAbi, "registerIdentity", [wallet, identity, INDIA], 2_000_000n),
+      )
       const ok = await read<boolean>(t.identityRegistry, identityRegistryAbi, "isVerified", [wallet])
       if (!ok) throw new Error(`${role} not verified after onboarding`)
       log(`  ✓ ${role} verified in ERC-3643 Identity Registry`)
@@ -332,6 +366,7 @@ async function main() {
     d.arkiv = { assetEntityKey: key }
   })
 
+  log(`\ndeployer HBAR left: ${Number(await hedera.getBalance({ address: deployer })) / 1e18}`)
   log("\nDeployment complete:")
   log(JSON.stringify({ bond, dvp: d.dvp, tinr: d.tinr, identityRegistry: t.identityRegistry, compliance: t.modularCompliance }, null, 2))
 }

@@ -8,6 +8,7 @@ import {
   type Hex,
   createPublicClient,
   createWalletClient,
+  encodeDeployData,
   http,
   type PublicClient,
 } from "viem"
@@ -33,7 +34,7 @@ export const account = (role: Role) => privateKeyToAccount(key(role))
 
 export const hedera: PublicClient = createPublicClient({
   chain: hederaTestnet,
-  transport: http(HEDERA_RPC, { timeout: 60_000, retryCount: 3 }),
+  transport: http(HEDERA_RPC, { timeout: 30_000, retryCount: 4, retryDelay: 800 }),
 })
 
 export const hederaWallet = (role: Role) =>
@@ -70,14 +71,40 @@ export function artifact(name: string): { abi: Abi; bytecode: Hex } {
 
 const gasOpts = (gas: bigint) => ({ gas, gasPrice: HEDERA_GAS.price, type: "legacy" as const })
 
+/** Polls for the receipt directly (viem's block-watching wait stalls under Hashio rate limits). */
 export async function waitOk(hash: Hex, label: string) {
-  const r = await hedera.waitForTransactionReceipt({ hash, timeout: 180_000, pollingInterval: 2_000 })
-  if (r.status !== "success") throw new Error(`${label} reverted: ${hash}`)
-  return r
+  const deadline = Date.now() + 240_000
+  for (;;) {
+    try {
+      const r = await hedera.getTransactionReceipt({ hash })
+      if (r.status !== "success") throw new Error(`${label} reverted: ${hash}`)
+      return r
+    } catch (e: any) {
+      if (e.message?.includes("reverted")) throw e
+      if (Date.now() > deadline) throw new Error(`${label}: no receipt after 4 min (${hash})`)
+      await sleep(2_500)
+    }
+  }
 }
 
-export async function deploy(role: Role, name: string, args: unknown[] = [], gas: bigint = HEDERA_GAS.default) {
+/**
+ * Hedera charges at least 80% of the gas limit, so limits come from eth_estimateGas plus a 25%
+ * buffer. If the relay can't estimate (some ATS calls), fall back to the given fixed limit.
+ */
+async function tightGas(estimate: () => Promise<bigint>, fallback: bigint) {
+  try {
+    const est = await estimate()
+    const gas = (est * 125n) / 100n + 30_000n
+    return gas > HEDERA_GAS.max ? HEDERA_GAS.max : gas
+  } catch {
+    return fallback
+  }
+}
+
+export async function deploy(role: Role, name: string, args: unknown[] = [], fallbackGas: bigint = HEDERA_GAS.default) {
   const { abi, bytecode } = artifact(name)
+  const data = encodeDeployData({ abi, bytecode, args })
+  const gas = await tightGas(() => hedera.estimateGas({ account: account(role), data }), fallbackGas)
   const hash = await hederaWallet(role).deployContract({ abi, bytecode, args, ...gasOpts(gas) })
   const r = await waitOk(hash, `deploy ${name}`)
   if (!r.contractAddress) throw new Error(`no contract address for ${name}`)
@@ -91,8 +118,12 @@ export async function send(
   abi: Abi | readonly unknown[],
   functionName: string,
   args: unknown[] = [],
-  gas: bigint = HEDERA_GAS.default,
+  fallbackGas: bigint = HEDERA_GAS.default,
 ) {
+  const gas = await tightGas(
+    () => hedera.estimateContractGas({ address, abi: abi as Abi, functionName, args, account: account(role) } as any),
+    fallbackGas,
+  )
   const hash = await hederaWallet(role).writeContract({
     address,
     abi: abi as Abi,

@@ -26,6 +26,6 @@ export type Deployment = {
 }
 
 /** Current Hedera testnet deployment (written by scripts/deploy.ts). Fields are absent until deployed. */
-export const deployment = raw as Partial<Deployment>
+export const deployment = raw as unknown as Partial<Deployment>
 
 export const isDeployed = () => Boolean(deployment.bond?.address && deployment.dvp)

@@ -1,0 +1,145 @@
+"use client"
+
+import { ATS_ROLES, atsSecurityAbi, explainError, hashscanAddress, identityRegistryAbi } from "@regx/shared"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import type { Address } from "viem"
+import { useAccount } from "wagmi"
+import { useToast } from "@/components/toast"
+import { Addr, Badge, HederaTag, Section, TxLink } from "@/components/ui"
+import { d, hederaClient, nameOf } from "@/lib/config"
+import { useBondLive } from "@/lib/data"
+import { issuer } from "@/lib/tx"
+
+export default function Issuer() {
+  const { address } = useAccount()
+  const live = useBondLive()
+  const toast = useToast()
+  const qc = useQueryClient()
+  const [busy, setBusy] = useState<string>()
+  const bond = d.bond?.address
+
+  const isAgent = useQuery({
+    queryKey: ["isAgent", address],
+    enabled: Boolean(address && bond),
+    queryFn: () => hederaClient.readContract({ address: bond!, abi: atsSecurityAbi, functionName: "hasRole", args: [ATS_ROLES.FREEZE_MANAGER, address!] }),
+  })
+
+  const investors = useQuery({
+    queryKey: ["investors", live.data?.holders?.length],
+    enabled: Boolean(bond && d.trex),
+    queryFn: async () => {
+      const list = Array.from(new Set([...(Object.values(d.investors ?? {}) as Address[]), ...((live.data?.holders ?? []) as Address[])]))
+      return Promise.all(
+        list.map(async (a) => {
+          const [verified, frozen, units] = await Promise.all([
+            hederaClient.readContract({ address: d.trex!.identityRegistry, abi: identityRegistryAbi, functionName: "isVerified", args: [a] }),
+            hederaClient.readContract({ address: bond!, abi: atsSecurityAbi, functionName: "isFrozen", args: [a] }),
+            hederaClient.readContract({ address: bond!, abi: atsSecurityAbi, functionName: "balanceOf", args: [a] }),
+          ])
+          return { a, verified, frozen, units }
+        }),
+      )
+    },
+    refetchInterval: 10_000,
+  })
+
+  async function run(label: string, fn: () => Promise<string>) {
+    setBusy(label)
+    try {
+      const h = await fn()
+      toast({ kind: "ok", title: label, body: <TxLink hash={h} label="HashScan" /> })
+      setTimeout(() => qc.invalidateQueries(), 1500)
+      setTimeout(() => qc.invalidateQueries(), 8000)
+    } catch (e) {
+      toast({ kind: "err", title: `${label} failed`, body: explainError(e) })
+    } finally {
+      setBusy(undefined)
+    }
+  }
+
+  if (!d.bond || !d.trex) return <div className="panel p-6 text-sm">Not deployed yet.</div>
+  const canAct = Boolean(isAgent.data)
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold">Issuer & compliance console</h1>
+        <p className="text-sm text-muted">
+          Lifecycle and compliance controls on the ATS bond. Every action is enforced on Hedera, and the keeper publishes it to the public{" "}
+          <b>regx.action</b> feed on Arkiv.
+        </p>
+      </div>
+
+      {!canAct && (
+        <div className="rounded-xl border border-line bg-panel-2 px-4 py-3 text-sm text-muted">
+          Read-only: connect the issuer wallet ({nameOf(d.deployer)}) to freeze, unfreeze or pause. Coupons and onboarding run from the CLI:
+          <code className="num ml-1 rounded bg-panel px-1">npm run lifecycle -- coupon</code>
+        </div>
+      )}
+
+      <Section title="ERC-3643 configuration" right={<HederaTag />}>
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <Row k="Security (ATS diamond)" v={d.bond.address} />
+          <Row k="Identity Registry (T-REX)" v={d.trex.identityRegistry} />
+          <Row k="Modular Compliance (T-REX)" v={d.trex.modularCompliance} />
+          <Row k="InvestorCapModule" v={d.investorCapModule!} />
+          <Row k="Claim Issuer (ONCHAINID)" v={d.trex.claimIssuer} />
+          <Row k="Trusted Issuers Registry" v={d.trex.trustedIssuersRegistry} />
+          <Row k="Claim Topics Registry (topic 1 = KYC)" v={d.trex.claimTopicsRegistry} />
+          <Row k="RegX DvP settlement" v={d.dvp!} />
+        </dl>
+      </Section>
+
+      <Section
+        title="Trading status"
+        right={live.data?.paused ? <Badge tone="warn">paused</Badge> : <Badge tone="bid">live</Badge>}
+      >
+        <div className="flex gap-2">
+          <button className="btn btn-ghost" disabled={!canAct || !!busy || live.data?.paused} onClick={() => run("Paused trading", issuer.pause)}>
+            Pause security
+          </button>
+          <button className="btn btn-ghost" disabled={!canAct || !!busy || !live.data?.paused} onClick={() => run("Unpaused trading", issuer.unpause)}>
+            Unpause
+          </button>
+        </div>
+      </Section>
+
+      <Section title="Investors">
+        <div className="divide-y divide-line">
+          {investors.data?.map((i) => (
+            <div key={i.a} className="flex flex-wrap items-center gap-3 py-2 text-sm">
+              <span className="w-20 font-semibold">{nameOf(i.a)}</span>
+              <Addr a={i.a} />
+              {i.verified ? <Badge tone="bid">verified</Badge> : <Badge tone="ask">unverified</Badge>}
+              {i.frozen && <Badge tone="warn">frozen</Badge>}
+              <span className="num text-xs text-muted">
+                {i.units.toString()} {d.bond?.symbol}
+              </span>
+              <button
+                className="btn btn-ghost ml-auto px-2 py-1 text-xs"
+                disabled={!canAct || !!busy}
+                onClick={() => run(i.frozen ? `Unfroze ${nameOf(i.a)}` : `Froze ${nameOf(i.a)}`, () => issuer.freeze(i.a, !i.frozen))}
+              >
+                {i.frozen ? "Unfreeze" : "Freeze"}
+              </button>
+            </div>
+          ))}
+        </div>
+      </Section>
+    </div>
+  )
+}
+
+function Row({ k, v }: { k: string; v: string }) {
+  return (
+    <div>
+      <dt className="label">{k}</dt>
+      <dd className="num mt-0.5 break-all text-xs">
+        <a className="link" href={hashscanAddress(v)} target="_blank" rel="noreferrer">
+          {v} ↗
+        </a>
+      </dd>
+    </div>
+  )
+}
