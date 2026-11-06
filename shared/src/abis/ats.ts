@@ -20,10 +20,30 @@ const structs = [
   "struct CouponFor { uint256 tokenBalance; uint8 decimals; uint256 nominalValue; uint256 nominalValueDecimals; bool recordDateReached; Coupon coupon; CouponAmountFor couponAmount; bool isDisabled; }",
 ] as const
 
+/**
+ * ATS Factory ABI as deployed on Hedera testnet (factory 0.0.9213391 resolves the ATS v8.0.0 FactoryFacet;
+ * verified by probing selectors: v8 `deployBond` = 0x29002951 exists, v9 = 0xc2a862cc → FunctionNotFound).
+ */
+const factoryStructsV8 = [
+  "struct Rbac { bytes32 role; address[] members; }",
+  "struct ResolverProxyConfiguration { bytes32 key; uint256 version; }",
+  "struct ERC20MetadataInfo { string name; string symbol; string isin; uint8 decimals; }",
+  "struct SecurityData { address resolver; uint256 maxSupply; ResolverProxyConfiguration resolverProxyConfiguration; ERC20MetadataInfo erc20MetadataInfo; Rbac[] rbacs; address[] externalPauses; address[] externalControlLists; address[] externalKycLists; address compliance; address identityRegistry; bool arePartitionsProtected; bool isMultiPartition; bool isControllable; bool isWhiteList; bool clearingActive; bool internalKycActivated; bool erc20VotesActivated; }",
+  "struct BondDetailsData { bytes3 currency; uint256 nominalValue; uint8 nominalValueDecimals; uint256 startingDate; uint256 maturityDate; }",
+  "struct BondData { SecurityData security; BondDetailsData bondDetails; address[] proceedRecipients; bytes[] proceedRecipientsData; }",
+  "struct AdditionalSecurityData { bool countriesControlListType; string listOfCountries; string info; }",
+  "struct FactoryRegulationData { uint8 regulationType; uint8 regulationSubType; AdditionalSecurityData additionalSecurityData; }",
+] as const
+
 export const atsFactoryAbi = parseAbi([
-  ...structs,
+  ...factoryStructsV8,
   "function deployBond(BondData _bondData, FactoryRegulationData _factoryRegulationData) returns (address bondAddress_)",
   "event BondDeployed(address indexed deployer, address bondAddress, BondData bondData, FactoryRegulationData regulationData)",
+  "error FunctionNotFound(bytes4 _functionSelector)",
+  "error WrongISIN(string isin)",
+  "error WrongISINChecksum(string isin)",
+  "error WrongDates(uint256 firstDate, uint256 secondDate)",
+  "error NoInitialAdmins()",
 ])
 
 export const atsResolverAbi = parseAbi([

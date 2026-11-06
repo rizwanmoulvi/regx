@@ -11,9 +11,33 @@
     "tx:ir.init": "0x89f0533936351b74a6595dfc04164582fc75f2e4bc2997b3f6c59babfc8c4cbc",
     "tx:irs.bind": "0x5ee24cd47bb494216c5ccd42244ee8fd7931f8d5e3b4c097fae0f962141e351f",
     "tx:ir.addAgent": "0xfbf3904a94609e0b3719fe4a1a804706994a9db781d609531070205fb7056300",
-    "trex.identityRegistry": "2026-11-06T20:48:00.959Z"
+    "trex.identityRegistry": "2026-11-06T20:48:00.959Z",
+    "tx:mc.init": "0xb001afe577f59fa9956627a7075b9f3efbf73709a5f98244ffce9b687b7fcf35",
+    "tx:mc.addModule": "0x230ef6d1ab92ccad863c068c8f2aa76c338555ed026bdaf014fbc36dbd054f44",
+    "tx:mc.setMaxHolding": "0xa2b2e9c3dd893d12067e182d40757eb16799d24b01f73db6f6eb703fdde43ea6",
+    "trex.modularCompliance": "2026-11-06T20:49:54.406Z",
+    "ats.bond": "2026-11-06T20:55:41.675Z",
+    "trex.bindToken": "2026-11-06T20:56:21.790Z",
+    "tx:claim.alice": "0xd4749b654572cf2457dacfa56a9ea74c639ca966e279d1b20b26c1a8505280b6",
+    "tx:register.alice": "0xb7bcfe3f56b2f3f359b1c08881dae27b9ee13c2660bbeb138d18e72f731782f7",
+    "onboard.alice": "2026-11-06T20:57:57.379Z",
+    "tx:claim.bob": "0x9a1257f013f65997c601e2ebde5cf7d2ec93f24d858e7fcda4c0f900c594ffce",
+    "tx:register.bob": "0xcba34d8649d215d300ca4b7ffc865a598b71673de69379d4836b3a3807a4312b",
+    "onboard.bob": "2026-11-06T21:05:47.410Z",
+    "ats.mint.alice": "0x0588dab737fb8b75c97086eb3cc73ab707d0e82e8d269169ad6aa6cb696cf0cc",
+    "tinr.mint.alice": "0xe3564aad41c15e205fc6edd018bca5bed920dec6fdd9f1a0b4b4131b9014aae4",
+    "tinr.mint.bob": "0xbd81d4bba97dbbd91b69ed7fb6f8c2135a2561e2cfc40f4966a0bff1ad3a93b4",
+    "tinr.mint.carol": "0xab5a2aca3f5e4ee0c9026a4c4bf2d5010bf9a9108178f8daa45cd2d5b0076ace",
+    "approve.tinr.alice": "0xa73c647fb91a8e7f28444f33b0bf5844fea32bc6afab9061db3bb2fb22b19d4b",
+    "approve.tinr.bob": "0x23d6f4c67864c36bc4f59ab28c619df8977b5cb9a69009346a60502b15d680ae",
+    "approve.tinr.carol": "0xbb634f60b2b8a1c336fc9ca12ea37bb57fcf620491e874ac9da417160fd0c91f",
+    "approve.bond.alice": "0x4e3ae2b5f1e8470dea7ac266e9df27501ff85f20decfd7ae90e1e8ce4d5cb8f3",
+    "approve.bond.bob": "0x70f15539aab4f2d36840e0c61d8d20fbdfc4240e136c2c1b57a5f3e3e3d0bc6c",
+    "arkiv.asset": "2026-11-06T21:10:35.731Z"
   },
-  "txs": {},
+  "txs": {
+    "deployBond": "0xfeb637f1a9b6cb00c4116722dc97f2294de42238d5daa5dc8a6171c8af2f6269"
+  },
   "network": "hedera-testnet",
   "chainId": 296,
   "deployer": "0x900C96D56AdB24d6371cF1D7CE5b10E8899FE168",
@@ -26,7 +50,7 @@
   "ats": {
     "factory": "0xd1F118A40f3b02883D35909eF2517e7EDd78379d",
     "resolver": "0xBA2D5FC2083A0b8f164c50e65d782087fBA18E0a",
-    "bondConfigVersion": ""
+    "bondConfigVersion": "1"
   },
   "tinr": "0x4fac16ebbf7fc90ce6a87aba487e8cbcd4db0f9f",
   "dvp": "0xd422dbade01fba80b938e2772bb368e9518ff60c",
@@ -38,5 +62,21 @@
     "identityRegistryStorage": "0x2eea85f43c798d6c15ea201eb2a97fdd24bed7d2",
     "identityRegistry": "0x6c066d19fa64f263a989359709678c8ee9978f72",
     "modularCompliance": "0xe4ee31a947a4a5c98d080b3591c352f37c9524f0"
+  },
+  "bond": {
+    "address": "0xa34b9b438663e00c54277B59241307C065C30544",
+    "hederaId": "0.0.11345521",
+    "name": "Acme Textiles INV-2026-001",
+    "symbol": "ACME01",
+    "deployTx": "0xfeb637f1a9b6cb00c4116722dc97f2294de42238d5daa5dc8a6171c8af2f6269",
+    "maturity": "1801774488",
+    "start": "1793998488"
+  },
+  "identities": {
+    "alice": "0x691737499b55e8eb3cae20a8db97b5a985f081d4",
+    "bob": "0x7913dd86e3cbe7b12c333cbb204b6040594efb10"
+  },
+  "arkiv": {
+    "assetEntityKey": "0x48bd19c3d6941d15a7ebc99afdfb268c3536bf74e01bc2c2d7d354309daef112"
   }
 }

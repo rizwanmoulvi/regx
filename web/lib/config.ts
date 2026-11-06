@@ -1,5 +1,5 @@
 import { createPublicClient as createArkivPublicClient } from "@arkiv-network/sdk"
-import { arkivChain, deployment, hederaTestnet } from "@regx/shared"
+import { arkivChain, deployment, hederaTestnet, hederaTestnetMc } from "@regx/shared"
 import { http, createPublicClient } from "viem"
 import { createConfig } from "wagmi"
 import { injected } from "@wagmi/core"
@@ -14,7 +14,8 @@ export const d = deployment
 const hederaRpc = typeof window === "undefined" ? HASHIO : "/api/rpc/hedera"
 
 export const hederaClient = createPublicClient({
-  chain: hederaTestnet,
+  chain: hederaTestnetMc,
+  batch: { multicall: { wait: 30 } },
   transport: http(hederaRpc, { retryCount: 2, timeout: 30_000 }),
 })
 

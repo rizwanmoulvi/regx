@@ -10,7 +10,7 @@ Built at **ETHGlobal Mumbai 2026** for:
 - **Arkiv: Build on Arkiv (from scratch)**
 
 <!-- DEPLOYMENT:START -->
-_Deployment details are filled in by `npm run status` after `npm run deploy`._
+_Deployment details are filled in by `npm run readme` after `npm run deploy`._
 <!-- DEPLOYMENT:END -->
 
 ---

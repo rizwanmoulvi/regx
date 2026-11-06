@@ -22,7 +22,8 @@
     "status": "tsx scripts/status.ts",
     "web": "npm run dev -w web",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "e2e": "tsx scripts/e2e.ts"
+    "e2e": "tsx scripts/e2e.ts",
+    "readme": "tsx scripts/readme.ts"
   },
   "dependencies": {
     "@arkiv-network/sdk": "1.0.1",

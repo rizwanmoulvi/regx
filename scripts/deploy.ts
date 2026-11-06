@@ -56,6 +56,7 @@ const INDIA = 356
 const BOND = {
   name: "Acme Textiles INV-2026-001",
   symbol: "ACME01",
+  isin: "INE0RGX26010", // valid ISO 6166 checksum (ATS validates it)
   decimals: 0,
   maxSupply: 1000n,
   faceValueInr: 1000n, // ₹1,000 per unit
@@ -223,12 +224,8 @@ async function main() {
       security: {
         resolver: ATS_TESTNET.resolver,
         maxSupply: BOND.maxSupply,
-        resolverProxyConfigurationV2: {
-          configurationId: ATS_CONFIG_IDS.bond,
-          configurationVersion: latest,
-          replacementEnabled: true,
-        },
-        erc20Metadata: { name: BOND.name, symbol: BOND.symbol, decimals: BOND.decimals },
+        resolverProxyConfiguration: { key: ATS_CONFIG_IDS.bond, version: latest },
+        erc20MetadataInfo: { name: BOND.name, symbol: BOND.symbol, isin: BOND.isin, decimals: BOND.decimals },
         rbacs: roles.map((role) => ({ role, members: [deployer] })),
         externalPauses: [],
         externalControlLists: [],
@@ -246,11 +243,9 @@ async function main() {
       bondDetails: {
         currency: stringToHex("INR", { size: 3 }),
         nominalValue: BOND.faceValueInr * 100n,
-        nominalValueDecimals: 2n,
+        nominalValueDecimals: 2,
         startingDate: now,
         maturityDate: maturity,
-        effectiveDatetime: now,
-        isUnitNominalValue: true,
       },
       proceedRecipients: [],
       proceedRecipientsData: [],
@@ -272,7 +267,10 @@ async function main() {
       args: [bondData as any, regulation],
       account: account("deployer"),
       gas: HEDERA_GAS.max,
-    }).catch((e) => log(`  (simulation warning: ${e.shortMessage ?? e.message})`))
+    }).catch((e) => {
+      // Hedera bills 80% of the gas limit even on revert: never send a deployBond that fails simulation
+      throw new Error(`deployBond simulation failed: ${e.shortMessage ?? e.message}`)
+    })
 
     const est = await hedera
       .estimateContractGas({

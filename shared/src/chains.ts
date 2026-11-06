@@ -1,6 +1,12 @@
 import { rabdi } from "@arkiv-network/sdk/chains"
 import { hederaTestnet } from "viem/chains"
 
+/** Hedera testnet with Multicall3 (deployed at the canonical address) so viem can batch reads. */
+export const hederaTestnetMc = {
+  ...hederaTestnet,
+  contracts: { ...(hederaTestnet as any).contracts, multicall3: { address: "0xcA11bde05977b3631167028862bE2a173976CA11" as const } },
+}
+
 export { hederaTestnet }
 
 export const HEDERA_CHAIN_ID = 296
