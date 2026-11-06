@@ -4,6 +4,7 @@
  *   npm run lifecycle -- coupon [--in 60]       set a coupon (record date in N s), wait, pay holders in tINR
  *   npm run lifecycle -- coupon:set [--in 60]
  *   npm run lifecycle -- coupon:pay <couponId>
+ *   npm run lifecycle -- coupon:schedule [--in 60] [--exec 180] [--wait]   pay via Hedera Scheduled Transactions
  *   npm run lifecycle -- freeze <alice|bob|0x…>
  *   npm run lifecycle -- unfreeze <alice|bob|0x…>
  *   npm run lifecycle -- pause | unpause
@@ -12,11 +13,12 @@
  *   npm run lifecycle -- onboard <0x…>          new ONCHAINID + signed KYC claim + registration
  */
 import { addr, u64 } from "@arkiv-network/sdk/schema"
-import { type Address, type Hex, encodeAbiParameters, formatUnits, keccak256, parseEventLogs, toHex } from "viem"
+import { type Address, type Hex, encodeAbiParameters, encodeFunctionData, formatUnits, keccak256, parseEventLogs, toHex } from "viem"
 import { atsSecurityAbi } from "../shared/src/abis/ats"
 import { identityAbi, identityRegistryAbi, tINRAbi } from "../shared/src/abis/generated"
 import { Action, LIFETIME, toJsonBytes } from "../shared/src/arkiv"
 import { HEDERA_GAS } from "../shared/src/chains"
+import { hashscanSchedule, scheduleContractCall, scheduleStatus } from "./lib/hiero"
 import { type Role, ROLES, account, arkivWalletFor, deploy, hedera, loadDeployment, log, read, requireDeployment, saveDeployment, send, simulateAndSend, sleep } from "./lib/env"
 
 const d = requireDeployment()
@@ -34,13 +36,13 @@ const resolve = (x?: string): Address => {
 }
 const now = () => BigInt(Math.floor(Date.now() / 1000))
 
-async function couponSet(inSeconds: number) {
+async function couponSet(inSeconds: number, execAfter = 60) {
   const maturity = await read<bigint>(bond, atsSecurityAbi, "getMaturityDate")
   const start = d.bond.start ? BigInt(d.bond.start) : now() - 86400n
   const record = now() + BigInt(inSeconds)
   const coupon = {
     recordDate: record,
-    executionDate: record + 60n,
+    executionDate: record + BigInt(execAfter),
     startDate: start,
     endDate: start + 30n * 86400n < maturity ? start + 30n * 86400n : maturity,
     fixingDate: record,
@@ -92,6 +94,69 @@ async function couponPay(id: bigint) {
   log(`✓ coupon #${id} paid, regx.action ${entityKey}`)
 }
 
+/** Pays a coupon through Hedera Scheduled Transactions: one schedule per holder, executed by the network at the execution date. */
+async function couponSchedule(inSeconds: number, execAfter: number, wait: boolean) {
+  const id = BigInt(await couponSet(inSeconds, execAfter))
+  const [reg] = await read<any>(bond, atsSecurityAbi, "getCoupon", [id])
+  const executeAt = new Date(Number(reg.coupon.executionDate) * 1000)
+  for (;;) {
+    const holders = await read<Address[]>(bond, atsSecurityAbi, "getSecurityHolders", [0n, 100n])
+    const probe = holders[0] && (await read<any>(bond, atsSecurityAbi, "getCouponAmountFor", [id, holders[0]]))
+    if (!holders.length || probe?.recordDateReached) break
+    log("  waiting for record date (ATS snapshot)…")
+    await sleep(10_000)
+  }
+  const holders = await read<Address[]>(bond, atsSecurityAbi, "getSecurityHolders", [0n, 100n])
+  const schedules: { holder: Address; units: string; tinr: string; scheduleId: string; txId: string }[] = []
+  for (const h of holders) {
+    const forH = await read<any>(bond, atsSecurityAbi, "getCouponFor", [id, h])
+    const amt = await read<any>(bond, atsSecurityAbi, "getCouponAmountFor", [id, h])
+    if (!amt.recordDateReached || amt.numerator === 0n) continue
+    const tinr = (amt.numerator * 10n ** 6n) / amt.denominator
+    const calldata = encodeFunctionData({ abi: tINRAbi, functionName: "mint", args: [h, tinr] })
+    const s = await scheduleContractCall({ contract: d.tinr, calldata, gas: 150_000, executeAt, memo: `RegX ${d.bond.symbol} coupon #${id}` })
+    schedules.push({ holder: h, units: String(forH.tokenBalance), tinr: formatUnits(tinr, 6), scheduleId: s.scheduleId, txId: s.txId })
+    log(`  ⏱ schedule ${s.scheduleId}: ${formatUnits(tinr, 6)} tINR → ${h} at ${s.executeAt.toISOString()}  ${hashscanSchedule(s.scheduleId)}`)
+  }
+  const total = schedules.reduce((a, p) => a + Number(p.tinr), 0)
+  const keeper = arkivWalletFor("keeper")
+  const { entityKey } = await keeper.createEntity(
+    Action,
+    {
+      security: addr(bond),
+      kind: "coupon_scheduled",
+      hederaTx: (schedules[0]?.txId ?? "") as Hex,
+      logIndex: u64(0n),
+      timestamp: u64(now()),
+      summary: `Coupon #${id}: ₹${total.toLocaleString("en-IN", { maximumFractionDigits: 2 })} to ${schedules.length} holder(s) via Hedera Scheduled Transactions at ${executeAt.toISOString()}`,
+      meta: toJsonBytes({ couponId: String(id), executeAt: executeAt.toISOString(), schedules }),
+    },
+    { expiration: LIFETIME.action() },
+  )
+  log(`✓ regx.action coupon_scheduled ${entityKey}`)
+  if (!wait) return
+  log("waiting for the network to execute the schedules…")
+  for (;;) {
+    const st = await Promise.all(schedules.map((s) => scheduleStatus(s.scheduleId)))
+    if (st.every((x) => x.executed)) break
+    await sleep(10_000)
+  }
+  const { entityKey: paidKey } = await keeper.createEntity(
+    Action,
+    {
+      security: addr(bond),
+      kind: "coupon_paid",
+      hederaTx: (schedules[0]?.txId ?? "") as Hex,
+      logIndex: u64(1n),
+      timestamp: u64(now()),
+      summary: `Coupon #${id} paid by Hedera scheduled transactions: ₹${total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`,
+      meta: toJsonBytes({ couponId: String(id), schedules }),
+    },
+    { expiration: LIFETIME.action() },
+  )
+  log(`✓ all schedules executed; regx.action coupon_paid ${paidKey}`)
+}
+
 async function onboard(wallet: Address) {
   const dep = loadDeployment() as any
   const identity = await deploy("deployer", "Identity", [account("deployer").address, false], 5_000_000n)
@@ -111,6 +176,8 @@ async function main() {
       const id = await couponSet(flag("in", 60))
       return couponPay(BigInt(id))
     }
+    case "coupon:schedule":
+      return couponSchedule(flag("in", 60), flag("exec", 180), process.argv.includes("--wait"))
     case "coupon:set":
       return void (await couponSet(flag("in", 60)))
     case "coupon:pay":

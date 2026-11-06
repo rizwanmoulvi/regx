@@ -2,8 +2,13 @@
   "name": "regx",
   "private": true,
   "type": "module",
-  "workspaces": ["shared", "web"],
-  "engines": { "node": ">=22.10" },
+  "workspaces": [
+    "shared",
+    "web"
+  ],
+  "engines": {
+    "node": ">=22.10"
+  },
   "scripts": {
     "contracts:build": "cd contracts && forge build",
     "contracts:test": "cd contracts && forge test -vv",
@@ -16,10 +21,12 @@
     "lifecycle": "tsx scripts/lifecycle.ts",
     "status": "tsx scripts/status.ts",
     "web": "npm run dev -w web",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "e2e": "tsx scripts/e2e.ts"
   },
   "dependencies": {
     "@arkiv-network/sdk": "1.0.1",
+    "@hiero-ledger/sdk": "^2.90.1",
     "dotenv": "^16.4.5",
     "viem": "^2.21.0"
   },

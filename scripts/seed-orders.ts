@@ -5,6 +5,7 @@
  *   npm run seed:orders              # default book
  *   npm run seed:orders -- --flash   # one 3-minute sell order (shows Arkiv expiry live)
  */
+import { pathToFileURL } from "node:url"
 import type { Hex } from "viem"
 import { LIFETIME, OrderEntity, orderToEntity } from "../shared/src/arkiv"
 import { type Order, hashOrder, orderTypedData, randomNonce } from "../shared/src/order"
@@ -49,7 +50,7 @@ async function main() {
   await publishOrder("bob", "buy", 10n, 962.5, 2 * day)
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((e) => {
     console.error(e)
     process.exit(1)

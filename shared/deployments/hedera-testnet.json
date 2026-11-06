@@ -5,7 +5,11 @@
     "investorCapModule": "2026-11-06T20:33:56.097Z",
     "trex.claimTopicsRegistry": "2026-11-06T20:34:13.689Z",
     "trex.claimIssuer": "2026-11-06T20:35:33.600Z",
-    "trex.trustedIssuersRegistry": "0x2c058fab4b73eed7579a4cb08f63a62c74512682fc91ade247ccbe75abc48c9c"
+    "trex.trustedIssuersRegistry": "0x2c058fab4b73eed7579a4cb08f63a62c74512682fc91ade247ccbe75abc48c9c",
+    "tx:irs.init": "0xdf24d47ca5a46c94988acd326a57fe4741a1af4009ea265495984baec748f1a6",
+    "trex.identityRegistryStorage": "2026-11-06T20:44:31.309Z",
+    "tx:ir.init": "0x89f0533936351b74a6595dfc04164582fc75f2e4bc2997b3f6c59babfc8c4cbc",
+    "tx:irs.bind": "0x5ee24cd47bb494216c5ccd42244ee8fd7931f8d5e3b4c097fae0f962141e351f"
   },
   "txs": {},
   "network": "hedera-testnet",
@@ -28,6 +32,8 @@
   "trex": {
     "claimTopicsRegistry": "0x265c06cd315d4078b0ddefe621dfba6654ae6520",
     "claimIssuer": "0x1563e43d5475b1cf093b2eaa4912408db355aba1",
-    "trustedIssuersRegistry": "0x034488ed4f29dd273dbed1be3f510406df2ab2a3"
+    "trustedIssuersRegistry": "0x034488ed4f29dd273dbed1be3f510406df2ab2a3",
+    "identityRegistryStorage": "0x2eea85f43c798d6c15ea201eb2a97fdd24bed7d2",
+    "identityRegistry": "0x6c066d19fa64f263a989359709678c8ee9978f72"
   }
 }

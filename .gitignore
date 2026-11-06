@@ -13,3 +13,4 @@ contracts/out
 contracts/cache
 tsconfig.tsbuildinfo
 next-env.d.ts
+.next-build

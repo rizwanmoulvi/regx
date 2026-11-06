@@ -6,6 +6,7 @@ import { Addr, ArkivTag, Badge, EntityLink, Empty, TxLink, ago, inr } from "./ui
 const KIND: Record<string, { label: string; tone: "bid" | "ask" | "accent" | "warn" | "muted" }> = {
   coupon_set: { label: "Coupon set", tone: "accent" },
   coupon_paid: { label: "Coupon paid", tone: "bid" },
+  coupon_scheduled: { label: "Coupon scheduled", tone: "accent" },
   freeze: { label: "Freeze", tone: "ask" },
   unfreeze: { label: "Unfreeze", tone: "bid" },
   pause: { label: "Pause", tone: "warn" },
@@ -63,7 +64,13 @@ export function Actions({ actions, loading }: { actions?: ActionView[]; loading?
                 {a.summary} <span className="text-muted">· {ago(a.timestamp)}</span>
               </span>
               <span className="flex flex-col items-end gap-0.5">
-                <TxLink hash={a.hederaTx} label="HashScan" />
+                {Array.isArray(a.meta?.schedules) && a.meta.schedules[0]?.scheduleId ? (
+                  <a className="link num text-xs" href={`https://hashscan.io/testnet/schedule/${a.meta.schedules[0].scheduleId}`} target="_blank" rel="noreferrer">
+                    schedule {a.meta.schedules[0].scheduleId} ↗
+                  </a>
+                ) : (
+                  <TxLink hash={a.hederaTx?.startsWith("0x") ? a.hederaTx : undefined} label="HashScan" />
+                )}
                 <EntityLink entityKey={a.entityKey} label="Arkiv" />
               </span>
             </li>
