@@ -6,7 +6,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./deployments/*": "./deployments/*"
+    "./deployments/*": "./deployments/*",
+    "./bytecode": "./src/abis/bytecode.ts"
   },
   "peerDependencies": {
     "@arkiv-network/sdk": "*",

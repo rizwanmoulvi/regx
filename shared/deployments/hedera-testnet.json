@@ -9,7 +9,9 @@
     "tx:irs.init": "0xdf24d47ca5a46c94988acd326a57fe4741a1af4009ea265495984baec748f1a6",
     "trex.identityRegistryStorage": "2026-11-06T20:44:31.309Z",
     "tx:ir.init": "0x89f0533936351b74a6595dfc04164582fc75f2e4bc2997b3f6c59babfc8c4cbc",
-    "tx:irs.bind": "0x5ee24cd47bb494216c5ccd42244ee8fd7931f8d5e3b4c097fae0f962141e351f"
+    "tx:irs.bind": "0x5ee24cd47bb494216c5ccd42244ee8fd7931f8d5e3b4c097fae0f962141e351f",
+    "tx:ir.addAgent": "0xfbf3904a94609e0b3719fe4a1a804706994a9db781d609531070205fb7056300",
+    "trex.identityRegistry": "2026-11-06T20:48:00.959Z"
   },
   "txs": {},
   "network": "hedera-testnet",
@@ -34,6 +36,7 @@
     "claimIssuer": "0x1563e43d5475b1cf093b2eaa4912408db355aba1",
     "trustedIssuersRegistry": "0x034488ed4f29dd273dbed1be3f510406df2ab2a3",
     "identityRegistryStorage": "0x2eea85f43c798d6c15ea201eb2a97fdd24bed7d2",
-    "identityRegistry": "0x6c066d19fa64f263a989359709678c8ee9978f72"
+    "identityRegistry": "0x6c066d19fa64f263a989359709678c8ee9978f72",
+    "modularCompliance": "0xe4ee31a947a4a5c98d080b3591c352f37c9524f0"
   }
 }

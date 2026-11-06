@@ -35,6 +35,13 @@ export default function Portfolio() {
     }
   }
 
+  async function requestKyc() {
+    const r = await fetch("/api/kyc", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address }) })
+    const j = await r.json()
+    if (!r.ok) throw new Error(j.error ?? "KYC desk failed")
+    return (j.txs?.register ?? "0x") as string
+  }
+
   const s = st.data
   return (
     <div className="space-y-5">
@@ -71,6 +78,14 @@ export default function Portfolio() {
             Hedera faucet ↗
           </a>
         </div>
+        {s && !s.verified && process.env.NEXT_PUBLIC_DEMO_KYC === "1" && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg bg-warn-soft px-3 py-2 text-sm">
+            <span>Judging RegX? The demo KYC desk issues your wallet an ONCHAINID KYC claim and some test gas.</span>
+            <button className="btn btn-primary" disabled={!!busy} onClick={() => run("Demo KYC", requestKyc)}>
+              {busy === "Demo KYC" ? "Verifying… (~1 min)" : "Get verified"}
+            </button>
+          </div>
+        )}
         {s && !s.verified && (
           <p className="mt-4 text-xs text-muted">
             To become a verified investor, the compliance agent issues a KYC claim to a new ONCHAINID and registers it in the Identity Registry:{" "}
