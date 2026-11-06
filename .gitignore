@@ -8,3 +8,8 @@ cache
 broadcast
 .DS_Store
 vendor
+scripts/.keeper-state.json
+contracts/out
+contracts/cache
+tsconfig.tsbuildinfo
+next-env.d.ts

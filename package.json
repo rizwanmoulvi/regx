@@ -1,0 +1,31 @@
+{
+  "name": "regx",
+  "private": true,
+  "type": "module",
+  "workspaces": ["shared", "web"],
+  "engines": { "node": ">=22.10" },
+  "scripts": {
+    "contracts:build": "cd contracts && forge build",
+    "contracts:test": "cd contracts && forge test -vv",
+    "abis": "tsx scripts/export-abis.ts",
+    "deploy": "tsx scripts/deploy.ts",
+    "verify": "tsx scripts/verify.ts",
+    "sync:assets": "tsx scripts/arkiv-sync-assets.ts",
+    "seed:orders": "tsx scripts/seed-orders.ts",
+    "keeper": "tsx scripts/keeper.ts",
+    "lifecycle": "tsx scripts/lifecycle.ts",
+    "status": "tsx scripts/status.ts",
+    "web": "npm run dev -w web",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@arkiv-network/sdk": "1.0.1",
+    "dotenv": "^16.4.5",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
