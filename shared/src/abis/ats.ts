@@ -97,7 +97,11 @@ export const atsSecurityAbi = parseAbi([
   "event Paused(address indexed operator)",
   "event Unpaused(address indexed operator)",
   "event CouponSet(bytes32 indexed corporateActionId, uint256 indexed couponId, address indexed operator, Coupon coupon)",
-  // Errors surfaced by transfers (for decoding reverts and canTransfer reason codes)
+  // Errors surfaced by transfers (for decoding reverts and canTransfer reason codes). v8 = deployed testnet.
+  "error AddressNotVerified()",
+  "error ComplianceNotAllowed()",
+  "error InvalidKycStatus()",
+  "error InsufficientBalance(address account, uint256 balance, uint256 value, bytes32 partition)",
   "error AddressNotVerified(address account)",
   "error ComplianceNotAllowed(address from, address to, uint256 value)",
   "error InvalidKycStatus(address account)",

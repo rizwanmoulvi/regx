@@ -28,7 +28,7 @@ import { syncAssets } from "./arkiv-sync-assets"
 import { ROOT, arkiv, arkivWalletFor, hedera, log, requireDeployment, sleep } from "./lib/env"
 
 const STATE_FILE = join(ROOT, "scripts", ".keeper-state.json")
-const CHUNK = 2000n
+const CHUNK = 900n // Hashio caps eth_getLogs at 1000 blocks
 const POLL_MS = 4000
 const once = process.argv.includes("--once")
 

@@ -2,6 +2,12 @@ import { type Hex, hexToString } from "viem"
 
 /** Human messages for RegXDvP.checkFill reason codes and ATS / ERC-3643 transfer reason selectors. */
 const SELECTORS: Record<string, string> = {
+  // ATS v8 (deployed on Hedera testnet)
+  "0x209d2853": "Not a verified investor: no valid KYC claim in the ERC-3643 Identity Registry",
+  "0x66eb1b54": "Blocked by ERC-3643 compliance (e.g. per-investor holding cap)",
+  "0xfc855b1b": "KYC not granted on this security",
+  "0x5d6824c4": "Insufficient security balance",
+  // ATS v9 signatures
   "0xac12c8b3": "Not a verified investor: no valid KYC claim in the ERC-3643 Identity Registry",
   "0xf2801862": "Blocked by ERC-3643 compliance (e.g. per-investor holding cap)",
   "0x155a732e": "KYC not granted on this security",

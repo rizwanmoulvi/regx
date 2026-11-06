@@ -65,7 +65,7 @@ async function main() {
   log("3. Carol (unverified) is rejected")
   const [cOk, cReason] = await read<[boolean, Hex]>(d.dvp, regXDvPAbi, "checkFill", [best!.order, carol, 5n])
   const why = explainReason(cReason)
-  assert(!cOk && why.code === "0xac12c8b3", `checkFill(carol) blocked: ${why.message}`)
+  assert(!cOk && (why.code === "0x209d2853" || why.code === "0xac12c8b3"), `checkFill(carol) blocked: ${why.message}`)
   const carolCash0 = await read<bigint>(d.tinr, tINRAbi, "balanceOf", [carol])
   const hash = await hederaWallet("carol").writeContract({
     address: d.dvp,

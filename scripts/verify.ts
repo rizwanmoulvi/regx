@@ -37,14 +37,14 @@ for (const [address, id, args] of targets) {
     "--verifier",
     "sourcify",
     "--verifier-url",
-    "https://server-verify.hashscan.io/",
+    "https://sourcify.dev/server/",
     ...(args ? ["--constructor-args", args] : []),
   ]
   try {
     const out = execFileSync("forge", argv, { cwd: join(ROOT, "contracts"), encoding: "utf8", stdio: "pipe" })
     log(`✓ ${id.split(":")[1]} ${address}\n${out.trim().split("\n").slice(-2).join("\n")}`)
   } catch (e: any) {
-    log(`✗ ${id.split(":")[1]} ${address}: ${(e.stdout || e.stderr || e.message).toString().trim().split("\n").slice(-3).join(" | ")}`)
+    log(`✗ ${id.split(":")[1]} ${address}: ${((e.stdout || "") + (e.stderr || "") || e.message).toString().trim().split("\n").filter((l: string) => !l.startsWith("Submitting")).slice(-3).join(" | ")}`)
   }
 }
 log(`\nhttps://hashscan.io/testnet/contract/${d.dvp}`)
