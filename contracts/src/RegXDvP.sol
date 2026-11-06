@@ -17,6 +17,23 @@ interface ISecurityTransferCheck {
         returns (bool, bytes1, bytes32);
 }
 
+/// @notice Subset of the ERC-3643 (T-REX) token interface used for pre-trade checks.
+interface ITrexTransferCheck {
+    function paused() external view returns (bool);
+    function isFrozen(address) external view returns (bool);
+    function getFrozenTokens(address) external view returns (uint256);
+    function identityRegistry() external view returns (address);
+    function compliance() external view returns (address);
+}
+
+interface ITrexRegistry {
+    function isVerified(address) external view returns (bool);
+}
+
+interface ITrexCompliance {
+    function canTransfer(address from, address to, uint256 amount) external view returns (bool);
+}
+
 /// @title RegXDvP: atomic delivery-versus-payment for signed off-chain orders.
 /// @notice Orders are EIP-712 messages that makers publish on Arkiv. A taker fills one here:
 ///         the cash leg (payToken) and the security leg (an ATS ERC-3643 security token) move in a
@@ -49,6 +66,12 @@ contract RegXDvP is EIP712, ReentrancyGuard {
     bytes32 public constant PAY_BALANCE = "PAY_BALANCE";
     bytes32 public constant PAY_ALLOWANCE = "PAY_ALLOWANCE";
     bytes32 public constant SECURITY_BLOCKED = "SECURITY_BLOCKED";
+    bytes32 public constant PAUSED = "PAUSED";
+    bytes32 public constant FROZEN = "FROZEN";
+    bytes32 public constant SELLER_BALANCE = "SELLER_BALANCE";
+    bytes32 public constant SELLER_ALLOWANCE = "SELLER_ALLOWANCE";
+    bytes32 public constant NOT_VERIFIED = "NOT_VERIFIED";
+    bytes32 public constant COMPLIANCE = "COMPLIANCE";
 
     mapping(bytes32 => uint256) public filled;
     mapping(address => mapping(uint256 => bool)) public cancelled;
@@ -150,13 +173,33 @@ contract RegXDvP is EIP712, ReentrancyGuard {
         if (IERC20(o.payToken).balanceOf(buyer) < cost) return (false, PAY_BALANCE);
         if (IERC20(o.payToken).allowance(buyer, address(this)) < cost) return (false, PAY_ALLOWANCE);
 
+        // Hedera ATS (ERC-1400 + ERC-3643) exposes canTransferFrom; plain T-REX tokens don't.
         try ISecurityTransferCheck(o.security).canTransferFrom(seller, buyer, fillAmount, "") returns (
             bool can, bytes1, bytes32 code
         ) {
             if (!can) return (false, code == bytes32(0) ? SECURITY_BLOCKED : code);
+            return (true, OK);
+        } catch {}
+        return _checkTrex(o.security, seller, buyer, fillAmount);
+    }
+
+    /// @dev Mirrors T-REX Token.transferFrom: pause, freezes, free balance, allowance, Identity Registry, compliance.
+    function _checkTrex(address security, address seller, address buyer, uint256 amount)
+        internal
+        view
+        returns (bool, bytes32)
+    {
+        ITrexTransferCheck t = ITrexTransferCheck(security);
+        try t.paused() returns (bool p) {
+            if (p) return (false, PAUSED);
         } catch {
             return (false, SECURITY_BLOCKED);
         }
+        if (t.isFrozen(seller) || t.isFrozen(buyer)) return (false, FROZEN);
+        if (IERC20(security).balanceOf(seller) - t.getFrozenTokens(seller) < amount) return (false, SELLER_BALANCE);
+        if (IERC20(security).allowance(seller, address(this)) < amount) return (false, SELLER_ALLOWANCE);
+        if (!ITrexRegistry(t.identityRegistry()).isVerified(buyer)) return (false, NOT_VERIFIED);
+        if (!ITrexCompliance(t.compliance()).canTransfer(seller, buyer, amount)) return (false, COMPLIANCE);
         return (true, OK);
     }
 }

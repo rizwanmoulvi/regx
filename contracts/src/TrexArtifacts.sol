@@ -8,5 +8,6 @@ import "@tokenysolutions/t-rex/contracts/registry/implementation/TrustedIssuersR
 import "@tokenysolutions/t-rex/contracts/registry/implementation/IdentityRegistryStorage.sol";
 import "@tokenysolutions/t-rex/contracts/registry/implementation/IdentityRegistry.sol";
 import "@tokenysolutions/t-rex/contracts/compliance/modular/ModularCompliance.sol";
+import "@tokenysolutions/t-rex/contracts/token/Token.sol";
 import "@onchain-id/solidity/contracts/Identity.sol";
 import "@onchain-id/solidity/contracts/ClaimIssuer.sol";
