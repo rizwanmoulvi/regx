@@ -1,0 +1,14 @@
+{
+  "name": "@regx/contracts",
+  "private": true,
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test -vv"
+  },
+  "dependencies": {
+    "@onchain-id/solidity": "2.2.1",
+    "@openzeppelin/contracts": "4.9.6",
+    "@openzeppelin/contracts-upgradeable": "4.9.6",
+    "@tokenysolutions/t-rex": "4.1.6"
+  }
+}
