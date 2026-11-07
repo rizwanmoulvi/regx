@@ -26,8 +26,29 @@ alternative a bad fit:
 - **Public by default.** The same query works for any app, wallet or analytics site. The book is a public good, not a moat.
 - **Cheap writes, free reads.** Posting an order costs a fraction of a tGLM, and reading costs nothing.
 
+## If we swapped Arkiv for Postgres, users would lose
+
+- **A book they can read without us.** Today any wallet or analytics app runs `npm run arkiv:query` (or the same query in its own code)
+  with no RegX API, key or permission. With Postgres the book exists only behind our API. If RegX goes down or decides to hide an order,
+  investors lose their exit.
+- **Proof that an order is theirs.** The maker's wallet owns the entity, so only the maker can withdraw it. With Postgres, we could
+  delete or reorder anyone's orders and nobody could tell.
+- **Orders that die when they say they will.** Expiry is part of the entity, enforced by the network. With Postgres it's a cron job we run,
+  and a missed job shows stale quotes.
+- **A history anyone can verify.** Every `regx.fill` / `regx.action` carries the Whitechain tx hash, and anyone can re-run the keeper to
+  rebuild the same entities. A Postgres table is only as trustworthy as whoever has write access to it.
+
+What users would *gain* with Postgres: arbitrary SQL joins and full-text search. RegX doesn't need either. Every screen is one indexed
+filter plus a sort.
+
+## What we keep off Arkiv, and why
+
 **What we keep on Whitechain:** everything that needs regulatory finality. Ownership, balances, identity/KYC (ERC-3643), compliance rules,
 freezes, coupons and the atomic DvP. The split is deliberate: **Whitechain says who may hold the note and moves the USDT, and Arkiv says who wants to trade it.**
+These have to be final, enforced on every transfer, and settled atomically with money. That is a chain's job, not a database's.
+
+**What we keep off both:** personal data. KYC is a signed claim on the investor's ONCHAINID. Names, documents and the invoice itself
+never go on Arkiv, because entities are public and we would have no way to erase them on request before they expire.
 
 The other three collections follow the same reasoning. `regx.fill` and `regx.action` make trade history and corporate actions
 (coupons, freezes, KYC events) queryable public data. Today that data sits in a registrar's PDF or a private database.

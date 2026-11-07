@@ -31,19 +31,30 @@ SDK checks indexed columns and their types at compile time.
 
 ## `regx.fill`: settled trades
 
-`orderHash str✓`, `security addr✓`, `maker addr✓`, `taker addr✓`, `side str`, `price dec✓`, `amount u64`, `cost dec`, `hederaTx str✓`,
+`orderHash str✓`, `security addr✓`, `maker addr✓`, `taker addr✓`, `side str`, `price dec✓`, `amount u64`, `cost dec`, `hederaTx str✓` (Whitechain tx hash; the name is historical),
 `logIndex u64`, `block u64`, `timestamp u64✓`
 
 The keeper makes writes idempotent by looking up `hederaTx` + `logIndex` before it writes.
 
 ## `regx.action`: corporate actions & compliance events
 
-`security addr✓`, `kind str✓` (`mint`, `kyc_grant`, `kyc_revoke`, `freeze`, `unfreeze`, `pause`, `unpause`, `coupon_set`, `coupon_paid`,
-`order_cancel`), `subject addr?`, `hederaTx str✓`, `logIndex u64`, `timestamp u64✓`, `summary str`, `meta bytes` (JSON)
+`security addr✓`, `kind str✓`, `subject addr?`, `hederaTx str✓`, `logIndex u64`, `timestamp u64✓`, `summary str`, `meta bytes` (JSON)
+
+`kind` values written by the keeper, with the Whitechain event each comes from:
+
+| kind | Source event |
+|---|---|
+| `subscribe` | `RegXNote.Subscribed`: USDT paid to the issuer, units minted |
+| `coupon_paid` / `coupon_holder` | `RegXNote.CouponSettled` (total) / `CouponPaid` (per holder) |
+| `redeemed` / `redeem_holder` | `RegXNote.MaturitySettled` (total) / `Redeemed` (per holder) |
+| `freeze` / `unfreeze` | T-REX `AddressFrozen` |
+| `paused` / `unpaused` | T-REX `Paused` / `Unpaused` |
+| `kyc_grant` / `kyc_revoke` | T-REX `IdentityRegistered` / `IdentityRemoved` |
+| `order_cancel` | `RegXDvP.Cancelled` |
 
 ## `regx.asset`: security metadata
 
-`security addr✓`, `hederaId str✓`, `issuer addr✓`, `assetType str✓`, `status str✓`, `symbol str✓`, `name str`, `decimals u64`,
+`security addr✓`, `hederaId str✓` (venue id, `whitechain:0x…`; the name is historical), `issuer addr✓`, `assetType str✓`, `status str✓`, `symbol str✓`, `name str`, `decimals u64`,
 `currency str`, `faceValue dec`, `couponBps u64`, `maturity u64✓`, `maxSupply u64`, `totalSupply u64`, `holders u64`, `compliance str`,
 `identityRegistry addr`, `complianceContract addr`, `dvp addr`, `payToken addr`, `docs str?`, `meta bytes` (JSON: issue price, coupon dates, lifecycle contract; no PII), `updatedAt u64✓`, `chainId u64✓?` (`assetType = "invoice-note"`)
 
@@ -51,3 +62,15 @@ The keeper makes writes idempotent by looking up `hederaTx` + `logIndex` before 
 
 No personal data ever goes to Arkiv. KYC lives as a signed claim on the investor's ONCHAINID on Whitechain. Arkiv only sees wallet
 addresses, which are already public on both chains.
+
+## Who can change what
+
+| Collection | Create | Update / extend | Delete | Expires |
+|---|---|---|---|---|
+| `regx.order` | maker | maker only (we never update: an order is immutable once signed) | maker (cancel, or "Remove from Arkiv" once filled) | at the order's own `expiry`, so the book needs no cleanup |
+| `regx.fill` | keeper | only the keeper (owner) could; it never does: a trade print is immutable | keeper only, never used | `max()` |
+| `regx.action` | keeper | only the keeper (owner) could; it never does | keeper only, never used | `max()` |
+| `regx.asset` | keeper | keeper (`patchEntity` on every lifecycle change, `extendEntity(max)`) | keeper | `max()`, re-extended on every sync |
+
+Keeper wallet: `0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5`. Makers: Alice `0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753`, Bob
+`0xf3fE188e80ed94EFbDCB1B51e343200381d83DE3` (and any wallet that posts from the web app).

@@ -9,6 +9,7 @@ We don't use it as a log that nothing reads.
 |---|---|---|---|
 | Post order | **maker's wallet** (MetaMask in the app; keys in scripts) | `web/lib/tx.ts → postOrder`, `scripts/wc/seed-orders.ts` | `createEntity(OrderEntity, …, { expiration: ExpirationTime.atDate(expiry) })` |
 | Cancel order | maker | `web/lib/tx.ts → cancelOrder` | `deleteEntity({ entityKey })` (after `RegXDvP.cancel(nonce)` on Whitechain) |
+| Remove a filled order | maker | `web/lib/tx.ts → removeOrderEntity` (Portfolio → "Remove from Arkiv") | `deleteEntity({ entityKey })`, no Whitechain tx needed |
 | Mirror trade | keeper | `scripts/wc/keeper.ts` | `createEntity(Fill, …, { expiration: ExpirationTime.max() })` |
 | Mirror corporate action | keeper | `scripts/wc/keeper.ts` | `createEntity(Action, …)` |
 | Sync security terms | keeper | `scripts/wc/sync-assets.ts` (re-runnable) | `createEntity` or `patchEntity` + `extendEntity(max)` |
@@ -29,6 +30,19 @@ We don't use it as a log that nothing reads.
 The web app combines Arkiv data with live Whitechain state. Remaining size per order comes from `RegXDvP.remaining(order)`, and whether
 the maker is frozen or verified comes from T-REX `isFrozen` and the T-REX `isVerified`. Arkiv answers "what orders exist", and Whitechain answers "can this one
 settle right now".
+
+Try it: `npm run arkiv:query` runs the order-book, trade and action queries above and prints the results plus the wire query.
+
+## What each Arkiv feature changes for the user
+
+| Feature | What the user sees |
+|---|---|
+| Indexed `where` + `orderBy` | the order book on every asset page, best price next to the spread |
+| `expiration` = order expiry | the "Expires" column counts down and the order drops off the book with no transaction (try the "2 min" TTL) |
+| `$owner` = maker | "Entity owner" in the trade panel matches the order's signer, and only the maker sees Cancel / Remove in Portfolio |
+| `deleteEntity` | Cancel and "Remove from Arkiv" in Portfolio |
+| Keeper `createEntity` (fills, actions) | the trade tape, the corporate-actions feed and the Activity page, each row linking to both explorers |
+| `patchEntity` + `extendEntity` (assets) | the market cards' status badge (subscription → active → redeemed), outstanding units and holder count |
 
 ## Why each column is indexed
 

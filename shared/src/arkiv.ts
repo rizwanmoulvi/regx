@@ -16,11 +16,11 @@ import { type Address, type Hex, bytesToHex, formatUnits, hexToBytes, stringToBy
 import type { Order } from "./order"
 
 export const Asset = defineSchema("regx.asset", {
-  security: addr().indexed(), // ATS bond EVM address on Hedera
-  hederaId: str().indexed(), // 0.0.x contract id
+  security: addr().indexed(), // T-REX note token (Whitechain)
+  hederaId: str().indexed(), // venue-specific id ("whitechain:0x…"); historical column name
   issuer: addr().indexed(),
-  assetType: str().indexed(), // "invoice-bond"
-  status: str().indexed(), // active | paused | matured
+  assetType: str().indexed(), // "invoice-note"
+  status: str().indexed(), // subscription | active | paused | matured | redeemed
   symbol: str().indexed(),
   name: str(),
   decimals: u64(),
@@ -49,12 +49,12 @@ export const OrderEntity = defineSchema("regx.order", {
   dvp: addr(),
   maker: addr().indexed(),
   side: str().indexed(), // "sell" | "buy"
-  price: dec().indexed(), // human price in INR, for sorting & range queries
+  price: dec().indexed(), // human price in USDT, for sorting & range queries
   priceRaw: u256(), // exact base units signed in the order
   amount: u64(),
   nonce: u256(),
   expiry: u64().indexed(),
-  chainId: u64().indexed(), // 296; the book is venue-agnostic
+  chainId: u64().indexed(), // 1874 Whitechain Sepolia; the book is venue-agnostic
   sig: bytes(), // 65-byte EIP-712 signature
 })
 
@@ -75,7 +75,7 @@ export const Fill = defineSchema("regx.fill", {
 
 export const Action = defineSchema("regx.action", {
   security: addr().indexed(),
-  kind: str().indexed(), // coupon_set | coupon_paid | freeze | unfreeze | pause | unpause | mint | kyc_grant | kyc_revoke
+  kind: str().indexed(), // subscribe | coupon_paid | coupon_holder | redeemed | redeem_holder | freeze | unfreeze | paused | unpaused | kyc_grant | kyc_revoke | order_cancel
   subject: addr().optional(),
   hederaTx: str().indexed(),
   logIndex: u64(),
@@ -178,7 +178,7 @@ export async function fetchBook(client: ArkivReader, security: Address, side: "b
     .orderBy(side === "sell" ? asc("price") : desc("price"))
     .limit(100)
     .fetch()
-  // Price-time priority, enforced here too: Arkiv's ordering on the decimal column is not stable across reads.
+  // Price-time priority: Arkiv sorts by price; this also breaks ties by expiry so equal-priced rows never swap between reads.
   const dir = side === "sell" ? 1 : -1
   return (res.entities as Record<string, unknown>[])
     .map(entityToOrder)

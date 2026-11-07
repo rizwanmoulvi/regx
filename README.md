@@ -42,8 +42,9 @@ on-chain revert rather than a quiet delay.
 | **Coupon in USDT, auto-settled on the due date** by the keeper | Acme → holders | [0xb330abfe…](https://explorer.testnet.whitechain.io/tx/0xb330abfe3276c5ca1b5a8ca7184daa1b1ccc165bd4633add7270fc82bd952a7e) |
 | **Maturity: 15 USDT face value repaid, units burned**, auto-settled | Acme → holders | [0x183c9dd7…](https://explorer.testnet.whitechain.io/tx/0x183c9dd7d56091f4f86aaf0380b732d51e114e58936095bb9ff226476503eb21) |
 
-**Arkiv writers:** keeper [`0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5`](https://rabdi.explorer.arkiv.network/address/0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5) (assets, fills, actions); makers Alice [`0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753`](https://rabdi.explorer.arkiv.network/address/0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753) and Bob (orders).
-**Example query:** `select().from(OrderEntity).where(and(eq("security", addr("0xf65c3dffc32caa641a586819e274dcc4cbcc92f5")), eq("side","sell"), gt("expiry", u64(now)))).orderBy(asc("price"))`
+**Arkiv writers:** keeper [`0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5`](https://rabdi.explorer.arkiv.network/address/0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5) (assets, fills, actions); makers Alice [`0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753`](https://rabdi.explorer.arkiv.network/address/0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753) and Bob [`0xf3fE188e80ed94EFbDCB1B51e343200381d83DE3`](https://rabdi.explorer.arkiv.network/address/0xf3fE188e80ed94EFbDCB1B51e343200381d83DE3) (orders, owned by their own wallets).
+**Run a query yourself:** `npm install && ARKIV_ACCESS_KEY=… npm run arkiv:query` prints the live book, trades and corporate actions straight from Arkiv ([`scripts/arkiv-query.ts`](scripts/arkiv-query.ts)).
+**The order book query:** `select().from(OrderEntity).where(and(eq("security", addr("0xf65c3dffc32caa641a586819e274dcc4cbcc92f5")), eq("side","sell"), gt("expiry", u64(now)))).orderBy(asc("price"))`
 <!-- DEPLOYMENT:END -->
 
 `npm run wc:e2e` replays subscription, the Carol rejections, the Arkiv-sourced DvP fill and the keeper mirroring with assertions against
@@ -212,4 +213,4 @@ entities listed above were produced by running this code on testnet.
 
 ## License
 
-MIT for RegX code. T-REX (GPL-3.0) and ONCHAINID (GPL-3.0) contracts are used as npm dependencies.
+[MIT](LICENSE) for RegX code. T-REX (GPL-3.0) and ONCHAINID (GPL-3.0) contracts are used as npm dependencies.

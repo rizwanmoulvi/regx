@@ -31,7 +31,8 @@
     "hedera:e2e": "tsx scripts/hedera/e2e.ts",
     "hedera:readme": "tsx scripts/hedera/readme.ts",
     "wc:verify": "tsx scripts/wc/verify.ts",
-    "wc:e2e": "tsx scripts/wc/e2e.ts"
+    "wc:e2e": "tsx scripts/wc/e2e.ts",
+    "arkiv:query": "tsx scripts/arkiv-query.ts"
   },
   "dependencies": {
     "@arkiv-network/sdk": "1.0.1",
