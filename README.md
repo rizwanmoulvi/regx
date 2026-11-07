@@ -51,6 +51,14 @@ on-chain revert rather than a quiet delay.
 testnet. Everything in the tables above was also exercised through the web app (Bob subscribing and filling, Alice posting and cancelling,
 Carol's forced fill reverting on-chain, the issuer freezing, unfreezing, pausing and unpausing).
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Markets](docs/screenshots/1-markets.png) **Markets:** notes listed from Arkiv `regx.asset`, best bid/ask from the Arkiv book | ![Verified trade](docs/screenshots/2-trade-verified-investor.png) **Verified investor:** order book read from Arkiv, pre-trade check passes, atomic USDT DvP |
+| ![Unverified rejected](docs/screenshots/3-unverified-investor-rejected.png) **Unverified investor:** ERC-3643 blocks Carol; "send anyway" reverts on-chain | ![Issuer console](docs/screenshots/4-issuer-compliance-console.png) **Issuer:** terms, T-REX configuration, pause, freeze per investor |
+| ![Full lifecycle](docs/screenshots/5-full-lifecycle-coupon-maturity-usdt.png) **Full lifecycle:** subscription → coupon → maturity repaid in USDT, every step mirrored to Arkiv | ![Arkiv entity](docs/screenshots/6-arkiv-order-entity.png) **Arkiv:** Alice's order entity, owned by her wallet, indexed fields, expiring with the order |
+
 ---
 
 ## The problem
