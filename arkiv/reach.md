@@ -42,6 +42,8 @@ Yes, on testnet:
 
 - **Read the market without our app:** `npm install && npm run arkiv:query` (needs only an Arkiv RPC access key) prints the live order book,
   trades and corporate actions of ACME01 straight from Arkiv. Any wallet or analytics app can run the same query.
+- **Open the live app:** https://regx-ecru.vercel.app reads the book, trades and corporate actions from Arkiv with no RegX backend
+  in between. Connect any wallet: an unverified wallet can browse and watch its own trade get refused by the compliance checks.
 - **Use the app:** `npm run web` (README → Run it). Connect MetaMask, or on localhost use the built-in test wallet to switch between
   Issuer, Alice, Bob and Carol. Every flow (subscribe, post, fill, cancel, the compliance rejections, freeze, pause, coupon, maturity) was
   exercised in a browser against testnet on Nov 7.

@@ -5,6 +5,9 @@ ERC-3643 (T-REX) notes on **Whitechain**, settled in Whitechain test USDT, with 
 
 > Whitechain holds the money and enforces who may hold the note. Arkiv makes the market public and queryable, and stale orders expire on their own.
 
+**Live app:** https://regx-ecru.vercel.app (Whitechain Sepolia + Arkiv Rabdi; the keeper runs 24/7 on a small server)
+· **Demo video:** see the submission page
+
 Built at **ETHGlobal Mumbai 2026** for:
 - **Whitechain: Tokenize · Real World Finance on Whitechain**
 - **Arkiv: Build on Arkiv (from scratch)**

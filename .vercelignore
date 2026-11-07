@@ -1,0 +1,12 @@
+contracts
+vendor
+scripts
+docs
+PRD.md
+node_modules
+**/node_modules
+.next
+web/.next
+.env
+.env.*
+!.env.example
