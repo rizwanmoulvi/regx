@@ -1,1 +1,95 @@
-{}
+{
+  "done": {
+    "ctr.init": "0xa88a5657ab7ef7f6e84b51bab9822dd7db3af3a5c892ddb8edffa403105cd96f",
+    "ctr.topic": "0x228be408585c93aac9565511dd736b9e97008c4144df90ed19a904d9c0fed068",
+    "ci.key": "0xf2b45e4e37f993d6b0a19dc22804dfd75989fd8061a51ac42dbb3bcb0323aa44",
+    "tir.init": "0x4bfc58957a376d06876fc8f7c2af815468921565be858aee6d1eb6337e37d760",
+    "tir.add": "0x0f9b7a84cec79ff16a905dc5dfb4c5d7bcd6301206fd6dc9071cdadf9d458991",
+    "irs.init": "0x5a3c90e8c58c02e68732184ff70c768486e5edfc88c8278dcd8653367a9e042f",
+    "ir.init": "0xb58cb3e1bab8216514d4f0b96d62b475db8fcaadb3a0b83ce680083c04bb7db1",
+    "irs.bind": "0x973be5b272a0851c57ff9e71de680deaad4f2f75286eb899c22b55c3a25feb96",
+    "ir.agent": "0xf942e17d6f9d06f102492007ed02cabfabab62b04a2e621a9bb7cbdd23d56135",
+    "claim.alice": "0x398a1d8a7845835b32e254f5ef7b3edd81eac4e105d1dceab31c890cffe82752",
+    "register.alice": "0x97fc02a6c04be55b9a973dfc8e39c64a2682ff5dcf1bc07b82b80b4f1272b18c",
+    "claim.bob": "0x56b101f5c12a2020b70c7a8661cf93178ba0a453958807c91368e5693ad53b7f",
+    "register.bob": "0x7895988df7059b17312f22c060a755b93cbb2316d70d1adac635dcddb2266dcf",
+    "note0.mc.init": "0x320384dd69002b51c5f734cc148648078b869075a52ef8c65d31f14769f0dd33",
+    "note0.mc.addNote": "0x4764335409a77a55b6409b9350f1294362267bf85951412888336b9b6f45fbd8",
+    "note0.mc.addCap": "0xc99f10b9c8f0fc1c1151736a041e0f78c79644792c095a1a0f1ab1a91daf3ad2",
+    "note0.mc.cap": "0x7e539839da42ee25578f438d2db4dfb2e29469d82993a69a5f10d94c786abc3c",
+    "note0.token.init": "0x86822543f96080f7555607e1ef32060bec4fb8954e35b0597a5a56dbbe8e9be0",
+    "note0.token.agentNote": "0x67db8ce6ce2121898fa06d2c5843af4e63ca40154815c2ce5121fedd490f6bcf",
+    "note0.token.agentIssuer": "0xfe483bdbfe4033c88101ecfa493812778087fec38e5614c278675a396eb2c035",
+    "note0.token.unpause": "0xea7d774726c8cbdf3ef53cd6059203da494251a63c28b7028509b4aa2e904244",
+    "note0.note.configure": "0x17561d92a48fec2556f19b58ed7a814c4b0172d40001d07e67952b54447d9919",
+    "note0.issuer.approve": "0xe950402dcdfffff4c125453c2bf2cc235142ad90d0f38fdc67ab6897943f8bdc",
+    "note0.usdt.approve.note.alice": "0x52f93586bf02aed01a28a5388164c1c847e60443d67c2590f749d35b1ed3c84f",
+    "usdt.approve.dvp.alice": "0x6e6284f72ab6f5b39997552af1bdc2c708820ff944ca477528c882e69647f92f",
+    "note0.token.approve.dvp.alice": "0x465a00a4281a93657469f9239e0c3c9ee97339a089e287ccf790635cc4e70d57",
+    "note0.usdt.approve.note.bob": "0x2689e1fdbc34a14084ef0be7f203dcda4fcba9f65b74ccffddfbfc68ddcb2d22",
+    "usdt.approve.dvp.bob": "0x1dad00d9227d92e47f656cc13409530b0e5ec031c948d7b6384a63778dff8e60",
+    "note0.token.approve.dvp.bob": "0xcfefb9c8c4cfb19e0c32752c634008d1e64f0efa79020a74a88b7dc4fc84871d",
+    "note0.usdt.approve.note.carol": "0x7b89dc24e07d9a8a222e65a36e84a6f1cc497ae79a7cddf025e1938bf30c4187",
+    "usdt.approve.dvp.carol": "0x0d9b0347963f903173bc4e1c11be76b980ca894473fcf198da200d8d8f9568f2",
+    "usdt.fund.alice": "0x6cac388156d9482ab83df48c8f1df5998403669b657a60ed30a98b07526a6be0",
+    "usdt.fund.bob": "0xca1ebd8fc84b5bd7788ea5ad148053606b40bb6c4c6fdd69dccb331e86d7a13a",
+    "usdt.fund.carol": "0xd87937d04344daa8d55c385dfb982f5da10c0cd17935253702faa4688447b151"
+  },
+  "txs": {},
+  "network": "whitechain-sepolia",
+  "chainId": 1874,
+  "deployer": "0x900C96D56AdB24d6371cF1D7CE5b10E8899FE168",
+  "keeper": "0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5",
+  "usdt": "0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7",
+  "investors": {
+    "alice": "0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753",
+    "bob": "0xf3fE188e80ed94EFbDCB1B51e343200381d83DE3",
+    "carol": "0x79Ef99E73c88D476Aa2D3A4Fdf8AcfE90C6c7B89"
+  },
+  "identities": {
+    "alice": "0x6e5fd76184b3f59a4e05115c86a37f8d121d265b",
+    "bob": "0x919d5e2a38a7d57ffc9d71f2febefb52fce3a2c9"
+  },
+  "notes": [
+    {
+      "symbol": "ACME01",
+      "name": "Acme Textiles INV-2026-001",
+      "isin": "INE0RGX26010",
+      "token": "0xf65c3dffc32caa641a586819e274dcc4cbcc92f5",
+      "compliance": "0x3890da9e8644f71320c8d38bb2a214a363f85a82",
+      "note": "0x691737499b55e8eb3cae20a8db97b5a985f081d4",
+      "investorCap": "0xe785a928fbbc6f1bea42e1e98e32da8e322263a7",
+      "terms": {
+        "faceValue": "1000000",
+        "issuePrice": "970000",
+        "couponPerUnit": "10000",
+        "subscriptionEnd": "1794034202",
+        "maturity": "1794041402",
+        "couponDates": [
+          "1794034802"
+        ],
+        "investorCapUnits": "150"
+      },
+      "deployedAt": "2026-11-07T00:51:09.345Z",
+      "txs": {}
+    }
+  ],
+  "startBlock": "12416157",
+  "trex": {
+    "claimTopicsRegistry": "0xd422dbade01fba80b938e2772bb368e9518ff60c",
+    "claimIssuer": "0x659ea68a839c5b581c49b6f4f5005a2d8370dad8",
+    "trustedIssuersRegistry": "0x1563e43d5475b1cf093b2eaa4912408db355aba1",
+    "identityRegistryStorage": "0x2badbb968b29076708f4dc6e8cd6899044e955a2",
+    "identityRegistry": "0x2eea85f43c798d6c15ea201eb2a97fdd24bed7d2"
+  },
+  "dvp": "0x3bfbc24509c82bb524049b3e342926246c7176a9",
+  "active": 0,
+  "evidence": {
+    "subscribe_alice": "0x1cca6c8e035a63f013a219250ce02b5a6e5e503eaf5ce5b8a3fea1ef7744c61c",
+    "subscribe_bob": "0xf3ab83d94e3dc3e05cb43d12fc77f09d6ad22fc5d32182f405ac97cc018f7845",
+    "carol_subscribe_reverted": "0x0343498c82d986a4cfc44007c4bbec2555f282d4eaf39904f554b29e5cad82d6",
+    "order_entity": "0xb3ae4f8ab99d8ebcc7716d3cce12842e33d65f52f9090a87bf49f38acb6d1f19",
+    "fill": "0xd277ba24ad13601bb5f333c03349ee7097416adf0afea4d44b785258f338c956",
+    "carol_fill_reverted": "0x252deb8ed666fc26bd7f0ada491b44dd16868a67b15aecc546f118de868afbab"
+  }
+}

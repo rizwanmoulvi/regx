@@ -22,7 +22,7 @@ import {
   tokenAbi,
   trustedIssuersRegistryAbi,
 } from "../../shared/src/abis/generated"
-import { type NoteDeployment, WC_USDT, type WcDeployment, wcTx } from "../../shared/src/whitechain"
+import { type NoteDeployment, WC_USDT, type WcDeployment, wcAddress } from "../../shared/src/whitechain"
 import { type Role, account, log } from "../lib/env"
 import { loadWc, saveWc, wc, wcDeploy, wcRead, wcSend, wcWait, wcWallet } from "../lib/wc"
 
@@ -209,7 +209,7 @@ export async function newNote(opts: { sub: number; coupon: number; maturity: num
   d.active = d.notes!.length - 1
   delete (d as any)[`pending_${idx}`]
   save()
-  log(`  ✓ ${symbol} token ${nd.token}  ${wcTx(nd.token)}`)
+  log(`  ✓ ${symbol} token ${nd.token}  ${wcAddress(nd.token)}`)
   return nd
 }
 

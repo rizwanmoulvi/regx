@@ -29,7 +29,9 @@
     "hedera:lifecycle": "tsx scripts/hedera/lifecycle.ts",
     "hedera:status": "tsx scripts/hedera/status.ts",
     "hedera:e2e": "tsx scripts/hedera/e2e.ts",
-    "hedera:readme": "tsx scripts/hedera/readme.ts"
+    "hedera:readme": "tsx scripts/hedera/readme.ts",
+    "wc:verify": "tsx scripts/wc/verify.ts",
+    "wc:e2e": "tsx scripts/wc/e2e.ts"
   },
   "dependencies": {
     "@arkiv-network/sdk": "1.0.1",
