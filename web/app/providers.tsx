@@ -5,6 +5,7 @@ import { type ReactNode, useState } from "react"
 import { WagmiProvider } from "wagmi"
 import { wagmiConfig } from "@/lib/config"
 import { ToastProvider } from "@/components/toast"
+import { DevWalletSwitcher } from "@/components/dev-wallet"
 
 export function Providers({ children }: { children: ReactNode }) {
   const [qc] = useState(
@@ -13,7 +14,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={qc}>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          {children}
+          <DevWalletSwitcher />
+        </ToastProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )

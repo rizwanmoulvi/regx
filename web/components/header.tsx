@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAccount, useConnect, useDisconnect } from "wagmi"
-import { nameOf } from "@/lib/config"
+import { d, nameOf } from "@/lib/config"
 import { useAccountState } from "@/lib/data"
 
 const NAV = [
@@ -84,7 +84,9 @@ function Connect() {
     <div className="flex items-center gap-2">
       {st && (
         <div className="hidden items-center gap-2 text-xs sm:flex">
-          {st.verified ? (
+          {address?.toLowerCase() === d.deployer?.toLowerCase() ? (
+            <span className="rounded-md bg-panel-2 px-2 py-1 font-semibold text-accent">Issuer · token agent</span>
+          ) : st.verified ? (
             <span className="rounded-md bg-bid-soft px-2 py-1 font-semibold text-bid">✓ Verified investor</span>
           ) : (
             <span className="rounded-md bg-ask-soft px-2 py-1 font-semibold text-ask">Not verified</span>

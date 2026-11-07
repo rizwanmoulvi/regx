@@ -16,8 +16,8 @@ import {
   tokenAbi,
   type NoteDeployment,
 } from "@regx/shared"
-import { getAccount, signTypedData, switchChain, waitForTransactionReceipt, writeContract } from "wagmi/actions"
-import { type Address, type Hex, custom, erc20Abi, maxUint256, parseUnits } from "viem"
+import { getAccount, getConnectorClient, signTypedData, switchChain, writeContract } from "wagmi/actions"
+import { type Address, type Hex, custom, encodeFunctionData, erc20Abi, maxUint256, parseUnits } from "viem"
 import { arkiv, chainClient, d, note, wagmiConfig } from "./config"
 
 export async function ensureChain(chainId: number) {
@@ -56,8 +56,16 @@ async function write(params: { address: Address; abi: any; functionName: string;
       throw new Error(explainError(e))
     }
   }
-  const hash = await writeContract(wagmiConfig, { ...params, chainId: WC_CHAIN_ID, ...(force ? { gas: 600_000n } : {}) } as any)
-  const r = await waitForTransactionReceipt(wagmiConfig, { hash, chainId: WC_CHAIN_ID, timeout: 90_000 })
+  // wagmi dry-runs writeContract and sendTransaction, which would stop a forced tx in the browser,
+  // so force hands raw calldata with a fixed gas limit straight to the wallet.
+  const hash = force
+    ? ((await (await getConnectorClient(wagmiConfig, { chainId: WC_CHAIN_ID })).request({
+        method: "eth_sendTransaction",
+        params: [{ from: me(), to: params.address, data: encodeFunctionData(params as any), gas: "0x927c0" }],
+      } as any)) as Hex)
+    : await writeContract(wagmiConfig, { ...params, chainId: WC_CHAIN_ID } as any)
+  // viem's wait (not wagmi's, which throws on revert) so a reverted tx surfaces with its explorer link.
+  const r = await chainClient.waitForTransactionReceipt({ hash, timeout: 90_000, pollingInterval: 1_000 })
   if (r.status !== "success") throw new RevertedOnChain(hash)
   return hash
 }
@@ -113,6 +121,13 @@ export async function cancelOrder(o: { order: Order; entityKey: Hex; owner: Addr
     await arkivWallet().deleteEntity({ entityKey: o.entityKey })
   }
   return hash
+}
+
+/** A filled or cancelled order has nothing left to cancel on-chain; the maker just deletes its Arkiv entity. */
+export async function removeOrderEntity(entityKey: Hex) {
+  await ensureChain(arkiv.id)
+  const { txHash } = await arkivWallet().deleteEntity({ entityKey })
+  return txHash
 }
 
 export async function checkFill(order: Order, taker: Address, amount: bigint) {

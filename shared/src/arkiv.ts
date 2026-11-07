@@ -178,7 +178,17 @@ export async function fetchBook(client: ArkivReader, security: Address, side: "b
     .orderBy(side === "sell" ? asc("price") : desc("price"))
     .limit(100)
     .fetch()
-  return (res.entities as Record<string, unknown>[]).map(entityToOrder)
+  // Price-time priority, enforced here too: Arkiv's ordering on the decimal column is not stable across reads.
+  const dir = side === "sell" ? 1 : -1
+  return (res.entities as Record<string, unknown>[])
+    .map(entityToOrder)
+    .sort((a, b) =>
+      a.order.price !== b.order.price
+        ? dir * (a.order.price < b.order.price ? -1 : 1)
+        : a.order.expiry !== b.order.expiry
+          ? a.order.expiry < b.order.expiry ? -1 : 1
+          : a.entityKey.localeCompare(b.entityKey),
+    )
 }
 
 export async function fetchOrdersByMaker(client: ArkivReader, maker: Address) {

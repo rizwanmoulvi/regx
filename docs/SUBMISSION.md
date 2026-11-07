@@ -1,45 +1,47 @@
 # ETHGlobal Mumbai submission: RegX
 
 ## Short description (≤100 chars)
-Compliant order book for tokenized invoice bonds: Hedera ATS + ERC-3643, with orders living on Arkiv.
+Invoice notes on Whitechain: ERC-3643 rules, USDT coupons and DvP, order book on Arkiv.
 
 ## Description
 Indian MSMEs have well over ₹10 lakh crore stuck in unpaid invoices. Platforms let investors fund those invoices, but an investor
-can't exit before maturity: every platform is a closed silo with its own KYC and its own order book, and a tokenized security can't
-just trade on a DEX because every holder has to be a verified investor.
+can't exit before maturity: every platform is a closed silo with its own KYC and its own order book, a tokenized security can't just
+trade on a DEX because every holder has to be a verified investor, and the coupons and repayment still move over bank rails.
 
-RegX is a secondary market for invoice-backed bonds that keeps compliance inside the token and puts the market in public.
+RegX issues invoice-backed notes on Whitechain whose whole cash life runs in USDT, and puts their secondary market in public on Arkiv.
 
-- **Issuance on Hedera.** The bond (ACME01: ₹1,000 face, 12% coupon, 90 days) is issued through the Hedera Asset Tokenization Studio
-  factory and wired to a real ERC-3643 (T-REX) Identity Registry and Modular Compliance. Investors get a signed KYC claim on their
-  ONCHAINID. Transfers fail for anyone without one, and a compliance module caps any single investor's holding.
-- **Orders on Arkiv.** Makers sign EIP-712 orders and publish them from their own wallets as `regx.order` entities on Arkiv. The book
-  is one typed query (`security = X AND side = sell AND expiry > now ORDER BY price`), anyone can read it, only the maker can delete
-  their order, and each entity expires exactly when its order does, so stale orders disappear with no cleanup.
-- **Atomic settlement.** A taker fills through the RegXDvP contract on Hedera. Cash (tINR) and the bond move in one transaction, and the
-  bond's own ERC-3643 checks run inside it, so an unverified buyer's fill reverts and the payment rolls back.
-- **Lifecycle.** Coupons are recorded with ATS `setCoupon` (record-date snapshot) and paid pro-rata, optionally through Hedera
-  Scheduled Transactions that the network executes on the payment date. Freezes and pauses are enforced on-chain. A keeper mirrors
-  every trade and corporate action into Arkiv (`regx.fill`, `regx.action`), so the market's history is public, queryable data.
+- **Issuance and rules on Whitechain.** Each note (ACME01: 1 USDT face, issued at 0.97, 1% coupon) is a real ERC-3643 (T-REX) token
+  wired to an Identity Registry and a Modular Compliance. Investors hold a KYC claim on their ONCHAINID, signed by a trusted claim
+  issuer. Mints and transfers fail for anyone without one, a module caps any single holding, and the issuer can freeze wallets or pause.
+- **USDT through the whole lifecycle.** `RegXNote.subscribe` sends the investor's USDT straight to the issuer and mints the units. After each
+  coupon date anyone can trigger `payCoupon`, and after maturity `settleMaturity` repays face value to every holder and burns the units,
+  all pulled from the issuer's USDT allowance. A keeper triggers both on the due date. On testnet a short-dated note went through the
+  whole cycle on its own.
+- **Orders on Arkiv.** Makers sign EIP-712 orders and publish them from their own wallets as `regx.order` entities. The book is one typed
+  query, anyone can read it, only the maker can delete their order, and each entity expires exactly when its order does.
+- **Atomic settlement.** A taker fills through `RegXDvP` on Whitechain: USDT and units move in one transaction, and the token's ERC-3643
+  checks run inside it. An unverified buyer's fill reverts on-chain and the USDT never leaves their wallet.
+- **Public history.** The keeper mirrors every subscription, trade, coupon, repayment, freeze and KYC change into Arkiv
+  (`regx.fill`, `regx.action`), so the market's history is queryable by anyone.
 
 ## How it's made
-- **Contracts (Foundry, Solidity 0.8.17):** `RegXDvP` (EIP-712 orders, partial fills, nonce cancel, a `checkFill` pre-trade view that
-  calls the ATS token's own `canTransferFrom`), `InvestorCapModule` (a T-REX compliance module), and `tINR`. 13 tests run against the real
-  T-REX + ONCHAINID contracts.
-- **Hedera ATS:** we read the ATS source to wire it properly. The transfer path calls `IdentityRegistry.isVerified` and
-  `Compliance.canTransfer`, *and* checks the operator with `canTransfer(operator, 0x0, 0)`. Stock T-REX modules revert on that zero-address
-  call, which is why we wrote our own module. We set `internalKycActivated = false` so KYC comes entirely from ONCHAINID claims. The bond is
-  deployed by calling the live ATS factory's `deployBond` from our script, with the T-REX registry and compliance passed in.
-- **Arkiv:** `@arkiv-network/sdk` 1.0.1 with `defineSchema` (four collections), `createEntity` with
-  `ExpirationTime.atDate(order.expiry)`, `select().from().where().orderBy()`, `ownedBy`, `patchEntity` and `extendEntity` for the
-  re-runnable asset sync, and `deleteEntity` for cancels. One ECDSA key gives the same address on Hedera and Arkiv.
-- **Keeper:** polls Hedera logs (DvP, ATS bond, Identity Registry) and writes idempotent Arkiv entities keyed by Hedera tx hash + log
-  index. Anyone can re-run it and get the same data.
-- **Web:** Next.js 15, wagmi, viem, and a Hedera JSON-RPC proxy. The UI reads the book from Arkiv and the live remaining size and
-  eligibility from Hedera, then signs on Hedera and publishes on Arkiv with a chain switch in between.
-- **Hacky bits:** Hashio stalls viem's block-watching receipt wait, so we poll receipts ourselves. Hedera bills 80% of the gas limit,
-  so every tx uses `eth_estimateGas` + 25%. The Arkiv explorer's URL scheme came from reading its JS bundle.
+- **Contracts (Foundry, Solidity 0.8.17):** `RegXNote` is both the lifecycle manager (a token agent holding the USDT terms) and a T-REX
+  compliance module that enforces the windows: mint only during subscription, no transfers after maturity. `RegXDvP` handles EIP-712
+  orders, partial fills, nonce cancels, and a `checkFill` view that runs the token's own checks so the UI can explain a rejection before
+  any gas is spent. `InvestorCapModule` enforces the holding cap. 24 tests run against the real T-REX Token and ONCHAINID contracts.
+- **Whitechain:** a resumable viem deployment script (T-REX stack, onboarding with real claim signatures, USDT distribution, one command
+  per new note), with all 12 contracts verified on the Whitechain explorer through its Blockscout API. Every payment uses the official test USDT.
+- **Arkiv:** `@arkiv-network/sdk` 1.0.1 with `defineSchema` (four collections), `createEntity` with `ExpirationTime.atDate(order.expiry)`,
+  `select().from().where().orderBy()`, `ownedBy`, `patchEntity` and `extendEntity` for the re-runnable asset sync, and `deleteEntity`
+  for cancels. One ECDSA key gives the same address on Whitechain and Arkiv.
+- **Keeper:** polls Whitechain logs (DvP, notes, tokens, Identity Registry), writes idempotent Arkiv entities keyed by tx hash + log index,
+  and calls the permissionless settlement functions when they come due.
+- **Web:** Next.js 15, wagmi and viem. It reads the book from Arkiv and the live remaining size, eligibility and lifecycle state from
+  Whitechain, then signs on Whitechain and publishes on Arkiv with a chain switch in between. A localhost-only test wallet lets you switch
+  between issuer and investors while recording the demo.
+- **History:** the first venue was Hedera's Asset Tokenization Studio (kept in `scripts/hedera/`). Moving to Whitechain meant swapping the
+  ATS diamond for a plain T-REX token and adding `RegXNote`, so coupons and repayment are paid by our own contract in USDT.
 
 ## Prize tracks
-- Hedera: Tokenize Anything with Hedera Studios
+- Whitechain: Tokenize · Real World Finance on Whitechain
 - Arkiv: Build on Arkiv (from scratch)

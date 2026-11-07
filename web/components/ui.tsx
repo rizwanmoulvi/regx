@@ -106,3 +106,6 @@ export function Stat({ label, value, sub }: { label: string; value: ReactNode; s
 export function Empty({ children }: { children: ReactNode }) {
   return <div className="py-6 text-center text-sm text-muted">{children}</div>
 }
+
+/** Same output on server and client (no locale/timezone drift → no hydration mismatch). */
+export const utc = (sec: number | bigint | string) => new Date(Number(sec) * 1000).toISOString().slice(0, 16).replace("T", " ") + " UTC"

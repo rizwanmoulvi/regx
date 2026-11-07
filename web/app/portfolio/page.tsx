@@ -10,7 +10,7 @@ import { useToast } from "@/components/toast"
 import { ArkivTag, Badge, EntityLink, Empty, HederaTag, Section, Stat, TxLink, inr, until } from "@/components/ui"
 import { d, note } from "@/lib/config"
 import { useAccountState, useMyOrders } from "@/lib/data"
-import { approveUsdt, cancelOrder } from "@/lib/tx"
+import { approveUsdt, cancelOrder, removeOrderEntity } from "@/lib/tx"
 
 export default function Portfolio() {
   const { address } = useAccount()
@@ -22,11 +22,11 @@ export default function Portfolio() {
 
   if (!address) return <div className="panel p-8 text-center text-sm text-muted">Connect a wallet to see your portfolio.</div>
 
-  async function run(label: string, fn: () => Promise<string>) {
+  async function run(label: string, fn: () => Promise<string>, onArkiv = false) {
     setBusy(label)
     try {
       const h = await fn()
-      toast({ kind: "ok", title: `${label} done`, body: <TxLink hash={h} label="Explorer" /> })
+      toast({ kind: "ok", title: `${label} done`, body: onArkiv ? "Your regx.order entity was deleted from Arkiv" : <TxLink hash={h} label="Explorer" /> })
       qc.invalidateQueries()
     } catch (e) {
       toast({ kind: "err", title: `${label} failed`, body: explainError(e) })
@@ -103,20 +103,32 @@ export default function Portfolio() {
           {orders.data?.map((o) => (
             <div key={o.entityKey} className="flex flex-wrap items-center gap-3 py-2 text-sm">
               <Badge tone={o.side === "sell" ? "ask" : "bid"}>{o.side.toUpperCase()}</Badge>
+              <span className="num font-semibold">{d.notes?.find((x) => x.token.toLowerCase() === o.order.security.toLowerCase())?.symbol ?? "note"}</span>
               <span className="num">
                 {o.remaining.toString()}/{o.order.amount.toString()} @ {inr(Number(formatUnits(o.order.price, 6)))}
               </span>
               <span className="text-xs text-muted">expires {until(Number(o.order.expiry))}</span>
               {o.remaining === 0n && <Badge>filled / cancelled</Badge>}
               <EntityLink entityKey={o.entityKey} />
-              <button
-                className="btn btn-ghost ml-auto px-2 py-1 text-xs"
-                disabled={!!busy}
-                onClick={() => run("Cancel", () => cancelOrder(o))}
-                title="Cancels the nonce on the DvP contract, then deletes your Arkiv entity"
-              >
-                Cancel
-              </button>
+              {o.remaining === 0n ? (
+                <button
+                  className="btn btn-ghost ml-auto px-2 py-1 text-xs"
+                  disabled={!!busy}
+                  onClick={() => run("Remove", () => removeOrderEntity(o.entityKey), true)}
+                  title="Nothing left to cancel on-chain: deletes your regx.order entity from Arkiv"
+                >
+                  Remove from Arkiv
+                </button>
+              ) : (
+                <button
+                  className="btn btn-ghost ml-auto px-2 py-1 text-xs"
+                  disabled={!!busy}
+                  onClick={() => run("Cancel", () => cancelOrder(o))}
+                  title="Cancels the nonce on the DvP contract, then deletes your Arkiv entity"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           ))}
         </div>

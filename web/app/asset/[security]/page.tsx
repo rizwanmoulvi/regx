@@ -9,7 +9,7 @@ import { Actions, Fills } from "@/components/feed"
 import { OrderBook } from "@/components/orderbook"
 import { useToast } from "@/components/toast"
 import { TradePanel } from "@/components/trade"
-import { ArkivTag, Badge, EntityLink, HederaTag, Stat, TxLink, inr, until } from "@/components/ui"
+import { ArkivTag, Badge, EntityLink, HederaTag, Stat, TxLink, inr, until, utc } from "@/components/ui"
 import { arkivClient, noteBySecurity } from "@/lib/config"
 import type { NoteDeployment } from "@regx/shared"
 import { type LiveOrder, parseAsset, useAccountState, useActions, useBook, useFills, useNoteLive } from "@/lib/data"
@@ -39,8 +39,12 @@ export default function AssetPage({ params }: { params: Promise<{ security: stri
 
   const selectedLive = useMemo(() => {
     if (!selected || !book.data) return selected
-    return [...book.data.asks, ...book.data.bids].find((o) => o.entityKey === selected.entityKey) ?? selected
+    return [...book.data.asks, ...book.data.bids].find((o) => o.entityKey === selected.entityKey)
   }, [selected, book.data])
+  // A fully filled, cancelled or expired order leaves the book: drop the selection with it.
+  useEffect(() => {
+    if (selected && book.data && !selectedLive) setSelected(undefined)
+  }, [selected, selectedLive, book.data])
 
   const a = asset.data
   if (asset.isLoading) return <div className="panel h-48 animate-pulse" />
@@ -82,7 +86,7 @@ export default function AssetPage({ params }: { params: Promise<{ security: stri
           <Stat label="Last price" value={lastPx ? inr(lastPx) : "—"} sub={`face ${inr(a.faceValue)}`} />
           <Stat label="Issue price" value={inr(Number(a.meta.issuePrice ?? 0))} sub="primary subscription" />
           <Stat label="Coupon" value={`${(a.couponBps / 100).toFixed(2)}% of face`} sub={`${note.terms.couponDates.length} payment(s)`} />
-          <Stat label="Maturity" value={days > 1 ? `${Math.ceil(days)} days` : until(a.maturity)} sub={new Date(a.maturity * 1000).toLocaleString()} />
+          <Stat label="Maturity" value={days > 1 ? `${Math.ceil(days)} days` : until(a.maturity)} sub={utc(a.maturity)} />
           <Stat label="Outstanding" value={`${(live.data?.totalSupply ?? a.totalSupply).toString()} units`} sub={`${live.data?.holders.length ?? Number(a.holders)} holders`} />
           <Stat label="Investor cap" value={`${a.meta.investorCapUnits ?? "—"} units`} sub="ERC-3643 compliance module" />
         </div>
@@ -143,7 +147,7 @@ function Lifecycle({ n }: { n: NoteDeployment }) {
   const qty = /^\d+$/.test(units) ? BigInt(units) : 0n
   const cost = (BigInt(n.terms.issuePrice) * qty) as bigint
 
-  async function run(label: string, fn: () => Promise<string>) {
+  async function run(label: string, fn: () => Promise<string>, failTitle = `${label} failed`) {
     setBusy(label)
     try {
       const h = await fn()
@@ -151,7 +155,7 @@ function Lifecycle({ n }: { n: NoteDeployment }) {
       qc.invalidateQueries()
       setTimeout(() => qc.invalidateQueries(), 6000)
     } catch (e) {
-      toast({ kind: "err", title: `${label} failed`, body: explainError(e) })
+      toast({ kind: "err", title: failTitle, body: explainError(e) })
     } finally {
       setBusy(undefined)
     }
@@ -180,7 +184,7 @@ function Lifecycle({ n }: { n: NoteDeployment }) {
         )}
       </header>
       <div className="grid gap-4 p-4 lg:grid-cols-[1.3fr_1fr]">
-        <ol className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <ol className="grid grid-cols-1 content-start gap-2 sm:grid-cols-3">
           {steps.map((s) => (
             <li key={s.label} className={`rounded-lg border px-3 py-2 text-sm ${s.done ? "border-bid/40 bg-bid-soft" : now >= s.at ? "border-accent/60" : "border-line"}`}>
               <div className="flex items-center justify-between">
@@ -198,11 +202,11 @@ function Lifecycle({ n }: { n: NoteDeployment }) {
               <div className="flex gap-2">
                 <input className="input num" value={units} onChange={(e) => setUnits(e.target.value.replace(/\D/g, ""))} aria-label="Units to subscribe" />
                 {me.data && me.data.usdtToNote < cost ? (
-                  <button className="btn btn-ghost shrink-0" disabled={!address || !!busy} onClick={() => run("Approved USDT for subscription", () => approveUsdt(n.note))}>
+                  <button className="btn btn-ghost shrink-0" disabled={!address || !!busy} onClick={() => run("Approved USDT for subscription", () => approveUsdt(n.note), "USDT approval failed")}>
                     Approve USDT
                   </button>
                 ) : (
-                  <button className="btn btn-primary shrink-0" disabled={!address || !!busy || qty === 0n} onClick={() => run(`Subscribed ${qty} units`, () => subscribe(n, qty))}>
+                  <button className="btn btn-primary shrink-0" disabled={!address || !!busy || qty === 0n} onClick={() => run(`Subscribed ${qty} units`, () => subscribe(n, qty), "Subscription rejected")}>
                     {busy?.startsWith("Subscribed") ? "Subscribing…" : "Subscribe"}
                   </button>
                 )}
@@ -212,11 +216,11 @@ function Lifecycle({ n }: { n: NoteDeployment }) {
               </p>
             </>
           ) : nextCoupon >= 0 && now >= Number(n.terms.couponDates[nextCoupon]) ? (
-            <button className="btn btn-primary w-full" disabled={!address || !!busy} onClick={() => run(`Coupon #${nextCoupon + 1} paid`, () => payCoupon(n, nextCoupon))}>
+            <button className="btn btn-primary w-full" disabled={!address || !!busy} onClick={() => run(`Coupon #${nextCoupon + 1} paid`, () => payCoupon(n, nextCoupon), "Coupon payment failed")}>
               Pay coupon #{nextCoupon + 1} to all holders
             </button>
           ) : !live.data?.matured && now >= maturity ? (
-            <button className="btn btn-primary w-full" disabled={!address || !!busy} onClick={() => run("Maturity settled", () => settleMaturity(n))}>
+            <button className="btn btn-primary w-full" disabled={!address || !!busy} onClick={() => run("Maturity settled", () => settleMaturity(n), "Maturity settlement failed")}>
               Settle maturity: repay face value in USDT
             </button>
           ) : (

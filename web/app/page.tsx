@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { type AssetView, useAssets, useBook, useFills } from "@/lib/data"
-import { ArkivTag, Badge, EntityLink, Empty, HederaTag, inr } from "@/components/ui"
+import { ArkivTag, Badge, EntityLink, Empty, HederaTag, inr, until } from "@/components/ui"
 
 export default function Markets() {
   const assets = useAssets()
@@ -66,7 +66,7 @@ function AssetCard({ a }: { a: AssetView }) {
   const bestAsk = book.data?.asks[0]
   const bestBid = book.data?.bids[0]
   const last = fills.data?.[0]
-  const days = Math.max(0, Math.ceil((a.maturity - Date.now() / 1000) / 86400))
+  const left = a.maturity - Date.now() / 1000
   const router = useRouter()
   return (
     <div
@@ -95,7 +95,7 @@ function AssetCard({ a }: { a: AssetView }) {
       <div className="mt-4 grid grid-cols-4 gap-3 text-sm">
         <Kv k="Coupon" v={`${(a.couponBps / 100).toFixed(2)}%`} />
         <Kv k="Face" v={inr(a.faceValue)} />
-        <Kv k="Maturity" v={days > 0 ? `${days}d` : a.status} />
+        <Kv k="Maturity" v={left <= 0 ? a.status : left > 86400 ? `${Math.ceil(left / 86400)}d` : until(a.maturity)} />
         <Kv k="Holders" v={a.holders.toString()} />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">

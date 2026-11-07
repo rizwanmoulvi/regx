@@ -6,7 +6,7 @@ import { useState } from "react"
 import { type Address, formatUnits } from "viem"
 import { useAccount } from "wagmi"
 import { useToast } from "@/components/toast"
-import { Addr, Badge, HederaTag, Section, TxLink, inr } from "@/components/ui"
+import { Addr, Badge, HederaTag, Section, TxLink, inr, utc } from "@/components/ui"
 import { chainClient, d, nameOf, note } from "@/lib/config"
 import { useNoteLive } from "@/lib/data"
 import { issuer } from "@/lib/tx"
@@ -83,9 +83,9 @@ export default function Issuer() {
           <Kv k="Face value" v={inr(Number(formatUnits(BigInt(t.faceValue), 6)))} />
           <Kv k="Issue price" v={inr(Number(formatUnits(BigInt(t.issuePrice), 6)))} />
           <Kv k="Coupon per unit" v={inr(Number(formatUnits(BigInt(t.couponPerUnit), 6)))} />
-          <Kv k="Subscription closes" v={new Date(Number(t.subscriptionEnd) * 1000).toLocaleString()} />
-          <Kv k="Coupon date(s)" v={t.couponDates.map((c) => new Date(Number(c) * 1000).toLocaleString()).join(", ")} />
-          <Kv k="Maturity" v={new Date(Number(t.maturity) * 1000).toLocaleString()} />
+          <Kv k="Subscription closes" v={utc(t.subscriptionEnd)} />
+          <Kv k="Coupon date(s)" v={t.couponDates.map(utc).join(", ")} />
+          <Kv k="Maturity" v={utc(t.maturity)} />
           <Kv k="Issuer USDT balance" v={live.data ? inr(Number(formatUnits(live.data.issuerUsdt, 6)), 2) : "…"} />
           <Kv k="Next obligation" v={live.data ? `${inr(Number(formatUnits(live.data.obligation.amount, 6)), 2)}${live.data.obligation.isMaturity ? " (maturity)" : " (coupon)"}` : "…"} />
           <Kv k="Issuer allowance to note" v={live.data ? (live.data.issuerAllowance > 10n ** 30n ? "unlimited" : inr(Number(formatUnits(live.data.issuerAllowance, 6)), 2)) : "…"} />
