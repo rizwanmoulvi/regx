@@ -9,6 +9,9 @@
  *   T-REX Token AddressFrozen / Paused      → regx.action freeze | unfreeze | pause | unpause
  *   T-REX IdentityRegistry IdentityRegistered/Removed → regx.action kyc_grant | kyc_revoke
  *
+ * It also auto-settles: when a coupon date or maturity passes it calls the note's permissionless payCoupon /
+ * settleMaturity (USDT is pulled from the issuer's allowance; the contract enforces dates and amounts).
+ *
  * Idempotent (keyed by tx hash + log index), restartable, and anyone can re-run it to reproduce the data.
  *   npm run wc:keeper            follow the chain
  *   npm run wc:keeper -- --once  catch up and exit
@@ -21,7 +24,7 @@ import { type Address, type Hex, type Log, formatUnits, parseEventLogs, zeroAddr
 import { identityRegistryAbi, regXDvPAbi, regXNoteAbi, tokenAbi } from "../../shared/src/abis/generated"
 import { Action, Fill, LIFETIME, toJsonBytes, v } from "../../shared/src/arkiv"
 import { ROOT, arkiv, arkivWalletFor, log, sleep } from "../lib/env"
-import { requireWc, wc } from "../lib/wc"
+import { requireWc, wc, wcRead, wcSend } from "../lib/wc"
 import { syncWcAssets } from "./sync-assets"
 
 const STATE = join(ROOT, "scripts", ".wc-keeper-state.json")
@@ -141,6 +144,30 @@ async function handle(logs: Log[]) {
   for (const t of touched) await syncWcAssets(t).catch((e) => log(`  ! sync failed: ${e.message}`))
 }
 
+/**
+ * Auto-settlement: once a coupon date or maturity passes, the keeper triggers the permissionless settlement.
+ * The note itself enforces dates and amounts; the keeper only supplies the transaction (and gas).
+ */
+async function autoSettle() {
+  const now = BigInt(Math.floor(Date.now() / 1000))
+  for (const n of d.notes) {
+    try {
+      for (let i = 0; i < n.terms.couponDates.length; i++) {
+        if (now < BigInt(n.terms.couponDates[i]) + 2n) continue
+        if (await wcRead<boolean>(n.note, regXNoteAbi, "couponPaid", [BigInt(i)])) continue
+        log(`⏰ ${n.symbol} coupon #${i + 1} is due: settling`)
+        await wcSend("keeper", n.note, regXNoteAbi, "payCoupon", [BigInt(i)])
+      }
+      if (now >= BigInt(n.terms.maturity) + 2n && !(await wcRead<boolean>(n.note, regXNoteAbi, "matured"))) {
+        log(`⏰ ${n.symbol} matured: repaying face value`)
+        await wcSend("keeper", n.note, regXNoteAbi, "settleMaturity")
+      }
+    } catch (e: any) {
+      log(`  ! auto-settle ${n.symbol}: ${e.shortMessage ?? e.message}`)
+    }
+  }
+}
+
 async function main() {
   const s = existsSync(STATE) ? JSON.parse(readFileSync(STATE, "utf8")) : undefined
   let from = s ? BigInt(s.lastBlock) + 1n : BigInt((d as any).startBlock ?? 0)
@@ -157,6 +184,7 @@ async function main() {
       from = to + 1n
     }
     if (once) break
+    if (!process.argv.includes("--no-settle")) await autoSettle()
     await sleep(3000)
   }
 }

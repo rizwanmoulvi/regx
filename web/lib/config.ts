@@ -12,6 +12,8 @@ export const arkiv = arkivChain(ARKIV_ACCESS_KEY)
 export const venue = whitechainSepolia
 export const d = wcDeployment
 export const note = activeNote(d)
+export const noteBySecurity = (sec?: string) =>
+  d.notes?.find((x) => x.token.toLowerCase() === sec?.toLowerCase()) ?? note
 
 /** Browser requests go through a same-origin proxy with retries. */
 const rpc = typeof window === "undefined" ? WC_RPC : "/api/rpc/wc"

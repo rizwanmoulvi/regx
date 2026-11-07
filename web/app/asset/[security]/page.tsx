@@ -10,7 +10,8 @@ import { OrderBook } from "@/components/orderbook"
 import { useToast } from "@/components/toast"
 import { TradePanel } from "@/components/trade"
 import { ArkivTag, Badge, EntityLink, HederaTag, Stat, TxLink, inr, until } from "@/components/ui"
-import { arkivClient, d, note } from "@/lib/config"
+import { arkivClient, noteBySecurity } from "@/lib/config"
+import type { NoteDeployment } from "@regx/shared"
 import { type LiveOrder, parseAsset, useAccountState, useActions, useBook, useFills, useNoteLive } from "@/lib/data"
 import { approveUsdt, payCoupon, settleMaturity, subscribe } from "@/lib/tx"
 
@@ -30,9 +31,10 @@ export default function AssetPage({ params }: { params: Promise<{ security: stri
   const book = useBook(sec)
   const fills = useFills(sec)
   const actions = useActions(sec)
-  const live = useNoteLive()
+  const note = noteBySecurity(sec)
+  const live = useNoteLive(note)
   const { address } = useAccount()
-  const me = useAccountState(address)
+  const me = useAccountState(address, note)
   const [selected, setSelected] = useState<LiveOrder>()
 
   const selectedLive = useMemo(() => {
@@ -98,7 +100,7 @@ export default function AssetPage({ params }: { params: Promise<{ security: stri
         </div>
       )}
 
-      <Lifecycle />
+      <Lifecycle n={note} />
 
       <div className="grid gap-5 lg:grid-cols-[1.35fr_1fr]">
         <OrderBook
@@ -108,7 +110,7 @@ export default function AssetPage({ params }: { params: Promise<{ security: stri
           selected={selected?.entityKey}
           onSelect={setSelected}
         />
-        <TradePanel selected={selectedLive} symbol={a.symbol} decimals={a.decimals} />
+        <TradePanel selected={selectedLive} symbol={a.symbol} decimals={a.decimals} note={note} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -120,11 +122,10 @@ export default function AssetPage({ params }: { params: Promise<{ security: stri
 }
 
 /** Issuance → coupon → maturity timeline, with the action available at each stage. */
-function Lifecycle() {
-  const n = note!
+function Lifecycle({ n }: { n: NoteDeployment }) {
   const { address } = useAccount()
-  const me = useAccountState(address)
-  const live = useNoteLive()
+  const me = useAccountState(address, n)
+  const live = useNoteLive(n)
   const toast = useToast()
   const qc = useQueryClient()
   const [units, setUnits] = useState("10")
@@ -201,7 +202,7 @@ function Lifecycle() {
                     Approve USDT
                   </button>
                 ) : (
-                  <button className="btn btn-primary shrink-0" disabled={!address || !!busy || qty === 0n} onClick={() => run(`Subscribed ${qty} units`, () => subscribe(qty))}>
+                  <button className="btn btn-primary shrink-0" disabled={!address || !!busy || qty === 0n} onClick={() => run(`Subscribed ${qty} units`, () => subscribe(n, qty))}>
                     {busy?.startsWith("Subscribed") ? "Subscribing…" : "Subscribe"}
                   </button>
                 )}
@@ -211,11 +212,11 @@ function Lifecycle() {
               </p>
             </>
           ) : nextCoupon >= 0 && now >= Number(n.terms.couponDates[nextCoupon]) ? (
-            <button className="btn btn-primary w-full" disabled={!address || !!busy} onClick={() => run(`Coupon #${nextCoupon + 1} paid`, () => payCoupon(nextCoupon))}>
+            <button className="btn btn-primary w-full" disabled={!address || !!busy} onClick={() => run(`Coupon #${nextCoupon + 1} paid`, () => payCoupon(n, nextCoupon))}>
               Pay coupon #{nextCoupon + 1} to all holders
             </button>
           ) : !live.data?.matured && now >= maturity ? (
-            <button className="btn btn-primary w-full" disabled={!address || !!busy} onClick={() => run("Maturity settled", settleMaturity)}>
+            <button className="btn btn-primary w-full" disabled={!address || !!busy} onClick={() => run("Maturity settled", () => settleMaturity(n))}>
               Settle maturity: repay face value in USDT
             </button>
           ) : (

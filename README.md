@@ -10,33 +10,35 @@ Built at **ETHGlobal Mumbai 2026** for:
 - **Arkiv: Build on Arkiv (from scratch)**
 
 <!-- DEPLOYMENT:START -->
-## Live deployment (Hedera testnet + Arkiv Rabdi)
+## Live on Whitechain Sepolia (chain 1874)
 
-| Component | Address |
+| Contract | Address (all verified on the explorer) |
 |---|---|
-| **ATS bond `ACME01`** (ERC-1400 diamond, ERC-3643) | [`0xa34b9b438663e00c54277B59241307C065C30544`](https://hashscan.io/testnet/contract/0xa34b9b438663e00c54277B59241307C065C30544) (`0.0.11345521`) |
-| ATS `deployBond` tx (via ATS Factory `0.0.9213391`) | [0xfeb637f1…](https://hashscan.io/testnet/transaction/0xfeb637f1a9b6cb00c4116722dc97f2294de42238d5daa5dc8a6171c8af2f6269) |
-| T-REX IdentityRegistry | [`0x6c066d19fa64f263a989359709678c8ee9978f72`](https://hashscan.io/testnet/contract/0x6c066d19fa64f263a989359709678c8ee9978f72) |
-| T-REX ModularCompliance | [`0xe4ee31a947a4a5c98d080b3591c352f37c9524f0`](https://hashscan.io/testnet/contract/0xe4ee31a947a4a5c98d080b3591c352f37c9524f0) |
-| InvestorCapModule (RegX, ERC-3643 module) | [`0x4e130efe2850ad8e8514d0f6639309c4aab97199`](https://hashscan.io/testnet/contract/0x4e130efe2850ad8e8514d0f6639309c4aab97199) |
-| ONCHAINID ClaimIssuer (KYC topic 1) | [`0x1563e43d5475b1cf093b2eaa4912408db355aba1`](https://hashscan.io/testnet/contract/0x1563e43d5475b1cf093b2eaa4912408db355aba1) |
-| TrustedIssuersRegistry / ClaimTopicsRegistry / IdentityRegistryStorage | [`0x034488ed4f29dd273dbed1be3f510406df2ab2a3`](https://hashscan.io/testnet/contract/0x034488ed4f29dd273dbed1be3f510406df2ab2a3) / [`0x265c06cd315d4078b0ddefe621dfba6654ae6520`](https://hashscan.io/testnet/contract/0x265c06cd315d4078b0ddefe621dfba6654ae6520) / [`0x2eea85f43c798d6c15ea201eb2a97fdd24bed7d2`](https://hashscan.io/testnet/contract/0x2eea85f43c798d6c15ea201eb2a97fdd24bed7d2) |
-| **RegXDvP** settlement | [`0xd422dbade01fba80b938e2772bb368e9518ff60c`](https://hashscan.io/testnet/contract/0xd422dbade01fba80b938e2772bb368e9518ff60c) |
-| tINR (test rupee) | [`0x4fac16ebbf7fc90ce6a87aba487e8cbcd4db0f9f`](https://hashscan.io/testnet/contract/0x4fac16ebbf7fc90ce6a87aba487e8cbcd4db0f9f) |
+| **ACME01**: T-REX Token (ERC-3643), trading until maturity | [`0xf65c3dffc32caa641a586819e274dcc4cbcc92f5`](https://explorer.testnet.whitechain.io/address/0xf65c3dffc32caa641a586819e274dcc4cbcc92f5) |
+| ACME01 RegXNote (lifecycle + compliance module) | [`0x691737499b55e8eb3cae20a8db97b5a985f081d4`](https://explorer.testnet.whitechain.io/address/0x691737499b55e8eb3cae20a8db97b5a985f081d4) |
+| ACME01 ModularCompliance / InvestorCapModule | [`0x3890da9e8644f71320c8d38bb2a214a363f85a82`](https://explorer.testnet.whitechain.io/address/0x3890da9e8644f71320c8d38bb2a214a363f85a82) / [`0xe785a928fbbc6f1bea42e1e98e32da8e322263a7`](https://explorer.testnet.whitechain.io/address/0xe785a928fbbc6f1bea42e1e98e32da8e322263a7) |
+| **ACME02**: short-dated note, full lifecycle completed | [`0x42696162ed99138508542746c0a66e214d5475d7`](https://explorer.testnet.whitechain.io/address/0x42696162ed99138508542746c0a66e214d5475d7) (RegXNote [`0x326fdd596bf7cd8fd5b1a7289373db5b1e99deae`](https://explorer.testnet.whitechain.io/address/0x326fdd596bf7cd8fd5b1a7289373db5b1e99deae)) |
+| T-REX IdentityRegistry | [`0x2eea85f43c798d6c15ea201eb2a97fdd24bed7d2`](https://explorer.testnet.whitechain.io/address/0x2eea85f43c798d6c15ea201eb2a97fdd24bed7d2) |
+| ONCHAINID ClaimIssuer (KYC topic 1) | [`0x659ea68a839c5b581c49b6f4f5005a2d8370dad8`](https://explorer.testnet.whitechain.io/address/0x659ea68a839c5b581c49b6f4f5005a2d8370dad8) |
+| TrustedIssuers / ClaimTopics / IdentityRegistryStorage | [`0x1563e43d5475b1cf093b2eaa4912408db355aba1`](https://explorer.testnet.whitechain.io/address/0x1563e43d5475b1cf093b2eaa4912408db355aba1) / [`0xd422dbade01fba80b938e2772bb368e9518ff60c`](https://explorer.testnet.whitechain.io/address/0xd422dbade01fba80b938e2772bb368e9518ff60c) / [`0x2badbb968b29076708f4dc6e8cd6899044e955a2`](https://explorer.testnet.whitechain.io/address/0x2badbb968b29076708f4dc6e8cd6899044e955a2) |
+| **RegXDvP** | [`0x3bfbc24509c82bb524049b3e342926246c7176a9`](https://explorer.testnet.whitechain.io/address/0x3bfbc24509c82bb524049b3e342926246c7176a9) |
+| Settlement asset: Whitechain test USDT | [`0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7`](https://explorer.testnet.whitechain.io/address/0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7) |
 
-**Arkiv writer wallets** (Rabdi, chain 7794095):
-- Keeper (`regx.asset`, `regx.fill`, `regx.action`): [`0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5`](https://rabdi.explorer.arkiv.network/address/0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5)
-- Makers (`regx.order`, self-published): Alice [`0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753`](https://rabdi.explorer.arkiv.network/address/0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753), Bob [`0xf3fE188e80ed94EFbDCB1B51e343200381d83DE3`](https://rabdi.explorer.arkiv.network/address/0xf3fE188e80ed94EFbDCB1B51e343200381d83DE3)
+### USDT payments in the main flow (explorer links)
 
-**Entities right now:** 1 assets · 5 orders · 2 fills · 8 actions
+| Step | Party | Tx |
+|---|---|---|
+| Subscription: 30 units for **29.1 USDT** paid to the issuer | Alice → Acme | [0x1cca6c8e…](https://explorer.testnet.whitechain.io/tx/0x1cca6c8e035a63f013a219250ce02b5a6e5e503eaf5ce5b8a3fea1ef7744c61c) |
+| Subscription: 10 units for 9.7 USDT | Bob → Acme | [0xf3ab83d9…](https://explorer.testnet.whitechain.io/tx/0xf3ab83d94e3dc3e05cb43d12fc77f09d6ad22fc5d32182f405ac97cc018f7845) |
+| **Unverified subscriber rejected on-chain** | Carol | [0x0343498c…](https://explorer.testnet.whitechain.io/tx/0x0343498c82d986a4cfc44007c4bbec2555f282d4eaf39904f554b29e5cad82d6) |
+| **Atomic DvP:** 10 units ↔ **9.9 USDT** in one tx (order read from Arkiv) | Bob ↔ Alice | [0xd277ba24…](https://explorer.testnet.whitechain.io/tx/0xd277ba24ad13601bb5f333c03349ee7097416adf0afea4d44b785258f338c956) |
+| **Unverified buyer rejected on-chain**, USDT untouched | Carol | [0x252deb8e…](https://explorer.testnet.whitechain.io/tx/0x252deb8ed666fc26bd7f0ada491b44dd16868a67b15aecc546f118de868afbab) |
+| ACME02 subscriptions | Alice, Bob | [0x11167655…](https://explorer.testnet.whitechain.io/tx/0x11167655abc95390be01a29ad5ec4394ccd633ebc41aeb51b7f622e1140ebe66) · [0x4f08b55c…](https://explorer.testnet.whitechain.io/tx/0x4f08b55c510df1b1994fed6ca6390dff72cd9b09ab877d0e0666a87efb9662a6) |
+| **Coupon in USDT, auto-settled on the due date** by the keeper | Acme → holders | [0xb330abfe…](https://explorer.testnet.whitechain.io/tx/0xb330abfe3276c5ca1b5a8ca7184daa1b1ccc165bd4633add7270fc82bd952a7e) |
+| **Maturity: 15 USDT face value repaid, units burned**, auto-settled | Acme → holders | [0x183c9dd7…](https://explorer.testnet.whitechain.io/tx/0x183c9dd7d56091f4f86aaf0380b732d51e114e58936095bb9ff226476503eb21) |
 
-**Example query** (best asks for ACME01, read by anyone):
-```ts
-await arkiv.select().from(OrderEntity)
-  .where(and(eq("security", addr("0xa34b9b438663e00c54277B59241307C065C30544")), eq("side", "sell"), gt("expiry", u64(now))))
-  .orderBy(asc("price")).limit(20).fetch()
-// wire query: arkiv.schema = str('regx.order') AND security = addr(0xa34b9b438663e00c54277b59241307c065c30544) AND side = str('sell') AND expiry > u64(<now>) ORDER BY price:dec ASC
-```
+**Arkiv writers:** keeper [`0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5`](https://rabdi.explorer.arkiv.network/address/0xee02FaA3ec03213c4a837a3F9Dc9D6F210ab74C5) (assets, fills, actions); makers Alice [`0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753`](https://rabdi.explorer.arkiv.network/address/0xfF6b6742Cce5c940b4EfFbE6f31e19b3f97f2753) and Bob (orders).
+**Example query:** `select().from(OrderEntity).where(and(eq("security", addr("0xf65c3dffc32caa641a586819e274dcc4cbcc92f5")), eq("side","sell"), gt("expiry", u64(now)))).orderBy(asc("price"))`
 <!-- DEPLOYMENT:END -->
 
 ## Proven on testnet (Nov 7 2026)

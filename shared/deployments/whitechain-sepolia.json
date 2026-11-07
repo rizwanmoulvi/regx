@@ -33,7 +33,22 @@
     "usdt.approve.dvp.carol": "0x0d9b0347963f903173bc4e1c11be76b980ca894473fcf198da200d8d8f9568f2",
     "usdt.fund.alice": "0x6cac388156d9482ab83df48c8f1df5998403669b657a60ed30a98b07526a6be0",
     "usdt.fund.bob": "0xca1ebd8fc84b5bd7788ea5ad148053606b40bb6c4c6fdd69dccb331e86d7a13a",
-    "usdt.fund.carol": "0xd87937d04344daa8d55c385dfb982f5da10c0cd17935253702faa4688447b151"
+    "usdt.fund.carol": "0xd87937d04344daa8d55c385dfb982f5da10c0cd17935253702faa4688447b151",
+    "note1.mc.init": "0xe48636e18fe24113ed262c6c5015851dde6a7af286cce5bdfdb0a71641ff99d4",
+    "note1.mc.addNote": "0x1ed87433afbff5592be6e3e6c1b32589d7118e9547a3b5d2f76510c97257cdda",
+    "note1.mc.addCap": "0xb89b9d2372b340b0dc18ff75f846222fff312d2d9ee7491e85bb1c0020b282f9",
+    "note1.mc.cap": "0x926b352a427386cf77efeba2c9c860785eebe24ea8d0c2a8d228b28595c41c43",
+    "note1.token.init": "0x63f21a517e3d4b7f4ae59d1a7aef020789cf1af66c36a5398931c77c8375c36e",
+    "note1.token.agentNote": "0xc61fb54a81ce29adc987d259132fa22b3d76e37c737cc40faa7fb2fb18beff96",
+    "note1.token.agentIssuer": "0xec5452a4e3f9b3313ea87fa963f49a2b31df65b3abe2df6dd6f47304944cd55f",
+    "note1.token.unpause": "0x0a3813141da59ebebd8738faa512b4e163e18de92b7f7b0fbda30ca56c0352ec",
+    "note1.note.configure": "0xbd61c2cbdc5875ee052fd0ea305bb005d81e6b20994cb9079b8e4db6bbc9e4a5",
+    "note1.issuer.approve": "0x3e6655058f992b9a2c2ce61dd47282e4b94a18c1d433b160324340bf86fa4918",
+    "note1.usdt.approve.note.alice": "0x0bf40d2fdb6b46283a8f20ff60ffd29f03e8318611fb64c5c1abc5f1a280a2a0",
+    "note1.token.approve.dvp.alice": "0x08db0f5cc840fe191ce6a893e824e3eb299f35e7b6642243df058698ee6b62e7",
+    "note1.usdt.approve.note.bob": "0xbdca607ccffed7c0815b562466618e7abc0cec7e05f04014cd6a68f85d42af12",
+    "note1.token.approve.dvp.bob": "0xfdc5cf0ce6fd7adb4a25c67c4b65ae4cf4f2bd0f422fb4ef3a7635c6884e09e5",
+    "note1.usdt.approve.note.carol": "0xd616c7e9636bad9e927b3776f2f4d932af4dfe252439739bfac401b6c095a470"
   },
   "txs": {},
   "network": "whitechain-sepolia",
@@ -72,6 +87,28 @@
       },
       "deployedAt": "2026-11-07T00:51:09.345Z",
       "txs": {}
+    },
+    {
+      "symbol": "ACME02",
+      "name": "Acme Textiles INV-2026-002",
+      "isin": "INE0RGX26010",
+      "token": "0x42696162ed99138508542746c0a66e214d5475d7",
+      "compliance": "0x67b9db411014658c8a274408e4ba07c2d80e16b3",
+      "note": "0x326fdd596bf7cd8fd5b1a7289373db5b1e99deae",
+      "investorCap": "0xefdf684aef1372a24d1b4685eb517250c7c4242a",
+      "terms": {
+        "faceValue": "1000000",
+        "issuePrice": "970000",
+        "couponPerUnit": "10000",
+        "subscriptionEnd": "1794013519",
+        "maturity": "1794013879",
+        "couponDates": [
+          "1794013699"
+        ],
+        "investorCapUnits": "150"
+      },
+      "deployedAt": "2026-11-07T00:58:18.432Z",
+      "txs": {}
     }
   ],
   "startBlock": "12416157",
@@ -90,6 +127,10 @@
     "carol_subscribe_reverted": "0x0343498c82d986a4cfc44007c4bbec2555f282d4eaf39904f554b29e5cad82d6",
     "order_entity": "0xb3ae4f8ab99d8ebcc7716d3cce12842e33d65f52f9090a87bf49f38acb6d1f19",
     "fill": "0xd277ba24ad13601bb5f333c03349ee7097416adf0afea4d44b785258f338c956",
-    "carol_fill_reverted": "0x252deb8ed666fc26bd7f0ada491b44dd16868a67b15aecc546f118de868afbab"
+    "carol_fill_reverted": "0x252deb8ed666fc26bd7f0ada491b44dd16868a67b15aecc546f118de868afbab",
+    "acme02_subscribe_alice": "0x11167655abc95390be01a29ad5ec4394ccd633ebc41aeb51b7f622e1140ebe66",
+    "acme02_subscribe_bob": "0x4f08b55c510df1b1994fed6ca6390dff72cd9b09ab877d0e0666a87efb9662a6",
+    "acme02_coupon_auto": "0xb330abfe3276c5ca1b5a8ca7184daa1b1ccc165bd4633add7270fc82bd952a7e",
+    "acme02_maturity_auto": "0x183c9dd7d56091f4f86aaf0380b732d51e114e58936095bb9ff226476503eb21"
   }
 }

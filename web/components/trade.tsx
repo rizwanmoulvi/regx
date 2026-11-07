@@ -8,11 +8,12 @@ import { useAccount } from "wagmi"
 import { type LiveOrder, useAccountState } from "@/lib/data"
 import { RevertedOnChain, approveUnits, approveUsdt, checkFill, fillOrder, postOrder } from "@/lib/tx"
 import { d } from "@/lib/config"
+import type { NoteDeployment } from "@regx/shared"
 import { OrderDetail } from "./orderbook"
 import { useToast } from "./toast"
 import { EntityLink, TxLink, inr } from "./ui"
 
-export function TradePanel({ selected, symbol, decimals }: { selected?: LiveOrder; symbol: string; decimals: number }) {
+export function TradePanel({ selected, symbol, decimals, note }: { selected?: LiveOrder; symbol: string; decimals: number; note?: NoteDeployment }) {
   const [tab, setTab] = useState<"take" | "make">("take")
   useEffect(() => {
     if (selected) setTab("take")
@@ -30,7 +31,7 @@ export function TradePanel({ selected, symbol, decimals }: { selected?: LiveOrde
           </button>
         ))}
       </div>
-      <div className="p-4">{tab === "take" ? <Take o={selected} symbol={symbol} decimals={decimals} /> : <Make symbol={symbol} />}</div>
+      <div className="p-4">{tab === "take" ? <Take o={selected} symbol={symbol} decimals={decimals} note={note} /> : <Make symbol={symbol} note={note} />}</div>
     </div>
   )
 }
@@ -45,11 +46,11 @@ function useRefreshSoon() {
   }
 }
 
-function Take({ o, symbol, decimals }: { o?: LiveOrder; symbol: string; decimals: number }) {
+function Take({ o, symbol, decimals, note }: { o?: LiveOrder; symbol: string; decimals: number; note?: NoteDeployment }) {
   const { address } = useAccount()
   const toast = useToast()
   const refresh = useRefreshSoon()
-  const { data: me } = useAccountState(address)
+  const { data: me } = useAccountState(address, note)
   const [qty, setQty] = useState("10")
   const [busy, setBusy] = useState<string>()
 
@@ -128,7 +129,7 @@ function Take({ o, symbol, decimals }: { o?: LiveOrder; symbol: string; decimals
             </button>
           )}
           {needsBondApproval && (
-            <button className="btn btn-ghost w-full" disabled={!!busy} onClick={() => run(`Approve ${symbol}`, () => approveUnits(), () => `${symbol} approved for DvP`)}>
+            <button className="btn btn-ghost w-full" disabled={!!busy} onClick={() => run(`Approve ${symbol}`, () => approveUnits(note), () => `${symbol} approved for DvP`)}>
               {busy?.startsWith("Approve") ? "Approving…" : `1 · Approve ${symbol}`}
             </button>
           )}
@@ -177,11 +178,11 @@ const TTLS = [
   { label: "7 days", s: 7 * 86400 },
 ]
 
-function Make({ symbol }: { symbol: string }) {
+function Make({ symbol, note }: { symbol: string; note?: NoteDeployment }) {
   const { address } = useAccount()
   const toast = useToast()
   const refresh = useRefreshSoon()
-  const { data: me } = useAccountState(address)
+  const { data: me } = useAccountState(address, note)
   const [side, setSide] = useState<"sell" | "buy">("sell")
   const [qty, setQty] = useState("10")
   const [price, setPrice] = useState("0.99")
@@ -202,7 +203,7 @@ function Make({ symbol }: { symbol: string }) {
   async function submit() {
     setBusy("Signing order…")
     try {
-      const r = await postOrder({ side, amount, price, ttlSeconds: ttl })
+      const r = await postOrder({ side, amount, price, ttlSeconds: ttl, note })
       setLast(r)
       toast({ kind: "ok", title: "Order published on Arkiv", body: <EntityLink entityKey={r.entityKey} label="View entity" /> })
       refresh()
@@ -216,7 +217,7 @@ function Make({ symbol }: { symbol: string }) {
   async function approve() {
     setBusy("Approving…")
     try {
-      const h = side === "sell" ? await approveUnits() : await approveUsdt(d.dvp!)
+      const h = side === "sell" ? await approveUnits(note) : await approveUsdt(d.dvp!)
       toast({ kind: "ok", title: "Approved for DvP", body: <TxLink hash={h} /> })
       refresh()
     } catch (e) {

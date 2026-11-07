@@ -14,6 +14,7 @@ import {
   regXDvPAbi,
   regXNoteAbi,
   tokenAbi,
+  type NoteDeployment,
 } from "@regx/shared"
 import { getAccount, signTypedData, switchChain, waitForTransactionReceipt, writeContract } from "wagmi/actions"
 import { type Address, type Hex, custom, erc20Abi, maxUint256, parseUnits } from "viem"
@@ -64,24 +65,24 @@ async function write(params: { address: Address; abi: any; functionName: string;
 export const approveUsdt = (spender: Address) =>
   write({ address: d.usdt!, abi: erc20Abi, functionName: "approve", args: [spender, maxUint256] })
 
-export const approveUnits = (amount = 1_000_000n) =>
-  write({ address: note!.token, abi: tokenAbi, functionName: "approve", args: [d.dvp, amount] })
+export const approveUnits = (n: NoteDeployment = note!, amount = 1_000_000n) =>
+  write({ address: n.token, abi: tokenAbi, functionName: "approve", args: [d.dvp, amount] })
 
 /** Primary issuance: pay the issue price in USDT, units are minted after ERC-3643 checks. */
-export const subscribe = (units: bigint) => write({ address: note!.note, abi: regXNoteAbi, functionName: "subscribe", args: [units] })
+export const subscribe = (n: NoteDeployment, units: bigint) => write({ address: n.note, abi: regXNoteAbi, functionName: "subscribe", args: [units] })
 
 /** Permissionless settlement once due: anyone can trigger, funds come from the issuer's USDT allowance. */
-export const payCoupon = (index: number) => write({ address: note!.note, abi: regXNoteAbi, functionName: "payCoupon", args: [BigInt(index)] })
-export const settleMaturity = () => write({ address: note!.note, abi: regXNoteAbi, functionName: "settleMaturity", args: [] })
+export const payCoupon = (n: NoteDeployment, index: number) => write({ address: n.note, abi: regXNoteAbi, functionName: "payCoupon", args: [BigInt(index)] })
+export const settleMaturity = (n: NoteDeployment) => write({ address: n.note, abi: regXNoteAbi, functionName: "settleMaturity", args: [] })
 
 export type PostedOrder = { entityKey: Hex; orderHash: Hex; txHash: Hex }
 
 /** Maker flow: sign the EIP-712 order for the Whitechain DvP, then publish it to Arkiv from the maker's wallet. */
-export async function postOrder(p: { side: "buy" | "sell"; amount: bigint; price: string; ttlSeconds: number }): Promise<PostedOrder> {
+export async function postOrder(p: { side: "buy" | "sell"; amount: bigint; price: string; ttlSeconds: number; note?: NoteDeployment }): Promise<PostedOrder> {
   const maker = me()
   const order: Order = {
     maker,
-    security: note!.token,
+    security: (p.note ?? note!).token,
     payToken: d.usdt!,
     isSell: p.side === "sell",
     price: parseUnits(p.price, 6),
@@ -127,7 +128,7 @@ export async function checkFill(order: Order, taker: Address, amount: bigint) {
 // ---------------------------------------------------------------------- issuer agent (T-REX token agent role)
 
 export const issuer = {
-  freeze: (who: Address, frozen: boolean) => write({ address: note!.token, abi: tokenAbi, functionName: "setAddressFrozen", args: [who, frozen] }),
-  pause: () => write({ address: note!.token, abi: tokenAbi, functionName: "pause", args: [] }),
-  unpause: () => write({ address: note!.token, abi: tokenAbi, functionName: "unpause", args: [] }),
+  freeze: (who: Address, frozen: boolean, n: NoteDeployment = note!) => write({ address: n.token, abi: tokenAbi, functionName: "setAddressFrozen", args: [who, frozen] }),
+  pause: (n: NoteDeployment = note!) => write({ address: n.token, abi: tokenAbi, functionName: "pause", args: [] }),
+  unpause: (n: NoteDeployment = note!) => write({ address: n.token, abi: tokenAbi, functionName: "unpause", args: [] }),
 }

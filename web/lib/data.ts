@@ -16,6 +16,7 @@ import {
 } from "@regx/shared"
 import { useQuery } from "@tanstack/react-query"
 import { type Address, type Hex, erc20Abi } from "viem"
+import type { NoteDeployment } from "@regx/shared"
 import { arkivClient, chainClient, d, note } from "./config"
 
 export type AssetView = {
@@ -188,12 +189,13 @@ export type AccountState = {
   glm: bigint
 }
 
-export const useAccountState = (address?: Address) =>
+export const useAccountState = (address?: Address, n: NoteDeployment | undefined = note) =>
   useQuery({
-    queryKey: ["account", address],
-    enabled: Boolean(address && note),
+    queryKey: ["account", address, n?.token],
+    enabled: Boolean(address && n),
     queryFn: async (): Promise<AccountState> => {
       const a = address!
+      const note = n
       const [verified, frozen, units, usdt, usdtToDvp, usdtToNote, unitsToDvp, wbt, glm] = await Promise.all([
         chainClient.readContract({ address: d.trex!.identityRegistry, abi: identityRegistryAbi, functionName: "isVerified", args: [a] }),
         chainClient.readContract({ address: note!.token, abi: tokenAbi, functionName: "isFrozen", args: [a] }),
@@ -221,12 +223,12 @@ export type NoteLive = {
   issuerAllowance: bigint
 }
 
-export const useNoteLive = () =>
+export const useNoteLive = (nd: NoteDeployment | undefined = note) =>
   useQuery({
-    queryKey: ["noteLive", note?.token],
-    enabled: Boolean(note),
+    queryKey: ["noteLive", nd?.token],
+    enabled: Boolean(nd),
     queryFn: async (): Promise<NoteLive> => {
-      const n = note!
+      const n = nd!
       const [paused, totalSupply, holders, matured, obligation, issuerUsdt, issuerAllowance, ...paid] = await Promise.all([
         chainClient.readContract({ address: n.token, abi: tokenAbi, functionName: "paused" }),
         chainClient.readContract({ address: n.token, abi: tokenAbi, functionName: "totalSupply" }),
